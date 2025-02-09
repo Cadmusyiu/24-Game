@@ -43,12 +43,31 @@ function Game24() {
     const currentConfig = levelConfig[level];
     let newCards = [];
     
-    while (newCards.length < currentConfig.cardCount) {
-      // Adjust number range to make 24 more achievable
-      const maxNum = level === 1 ? 12 : 9;
-      const num = Math.floor(Math.random() * maxNum) + 1;
-      if (!newCards.includes(num)) {
-        newCards.push(num);
+    if (level === 1) {
+      // Predefined sets of cards that can make 24
+      const twentyFourSets = [
+        [6, 6, 6, 6],
+        [3, 3, 8, 10],
+        [4, 4, 6, 10],
+        [1, 3, 8, 12],
+        [1, 4, 6, 13],
+        [2, 3, 4, 15],
+        [2, 4, 4, 14],
+        [3, 3, 4, 14],
+        [3, 4, 4, 13],
+        [3, 5, 5, 11]
+      ];
+      
+      // Randomly select a set that guarantees 24 is possible
+      newCards = twentyFourSets[Math.floor(Math.random() * twentyFourSets.length)];
+    } else {
+      // Existing logic for other levels
+      while (newCards.length < currentConfig.cardCount) {
+        const maxNum = level === 2 ? 9 : 9;
+        const num = Math.floor(Math.random() * maxNum) + 1;
+        if (!newCards.includes(num)) {
+          newCards.push(num);
+        }
       }
     }
 
