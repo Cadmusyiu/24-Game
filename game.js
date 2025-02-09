@@ -44,7 +44,8 @@ function Game24() {
     let newCards = [];
     
     while (newCards.length < currentConfig.cardCount) {
-      const maxNum = level === 1 ? 32 : 9;
+      // Adjust number range to make 24 more achievable
+      const maxNum = level === 1 ? 12 : 9;
       const num = Math.floor(Math.random() * maxNum) + 1;
       if (!newCards.includes(num)) {
         newCards.push(num);
@@ -65,21 +66,29 @@ function Game24() {
     }
   }
 
+  function calculateResult(num1, num2, operation) {
+    switch (operation) {
+      case '+': return num1 + num2;
+      case '-': return Math.abs(num1 - num2);
+      case '×': return num1 * num2;
+      case '÷': 
+        // Ensure division is safe and meaningful
+        return num1 >= num2 && num2 !== 0 ? num1 / num2 : null;
+      default: return null;
+    }
+  }
+
+  function isCloseToTwentyFour(num) {
+    return Math.abs(num - 24) < 0.0001;
+  }
+
   function handleOperation(operation) {
     if (level === 1) {
       // Level 1 logic
       const [num1, num2] = cards;
-      let result;
+      const result = calculateResult(num1, num2, operation);
 
-      switch (operation) {
-        case '+': result = num1 + num2; break;
-        case '-': result = Math.abs(num1 - num2); break;
-        case '×': result = num1 * num2; break;
-        case '÷': result = Math.max(num1, num2) / Math.min(num1, num2); break;
-        default: return;
-      }
-
-      if (Math.abs(result - 24) < 0.0001) {
+      if (result !== null && isCloseToTwentyFour(result)) {
         handleSuccess();
       } else {
         handleWrong();
@@ -91,19 +100,8 @@ function Game24() {
       let num1 = cards[selectedCards[0]];
       let num2 = cards[selectedCards[1]];
 
-      if (operation === '÷') {
-        if (num1 < num2) [num1, num2] = [num2, num1];
-        if (num2 === 0) return;
-      }
-
-      let result;
-      switch (operation) {
-        case '+': result = num1 + num2; break;
-        case '-': result = Math.abs(num1 - num2); break;
-        case '×': result = num1 * num2; break;
-        case '÷': result = num1 / num2; break;
-        default: return;
-      }
+      const result = calculateResult(num1, num2, operation);
+      if (result === null) return;
 
       const newCards = [...cards];
       newCards[selectedCards[0]] = result;
@@ -112,7 +110,7 @@ function Game24() {
       setSelectedCards([]);
 
       if (newCards.length === 1) {
-        if (Math.abs(newCards[0] - 24) < 0.0001) {
+        if (isCloseToTwentyFour(newCards[0])) {
           handleSuccess();
         } else {
           handleWrong();
