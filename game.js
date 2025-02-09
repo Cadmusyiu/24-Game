@@ -1,20 +1,18 @@
-// Create the game component
-function Game24() {
-  const [gamePhase, setGamePhase] = React.useState('name');
-  const [playerName, setPlayerName] = React.useState('');
-  const [level, setLevel] = React.useState(1);
-  const [timeElapsed, setTimeElapsed] = React.useState(0);
-  const [startTime, setStartTime] = React.useState(null);
-  const [cards, setCards] = React.useState([]);
-  const [selectedCards, setSelectedCards] = React.useState([]);
-  const [solvedCount, setSolvedCount] = React.useState(0);
-  const [wrongCount, setWrongCount] = React.useState(0);
-  const [showSuccess, setShowSuccess] = React.useState(false);
-  const [levelTimes, setLevelTimes] = React.useState({
-    level1: 0,
-    level2: 0,
-    level3: 0
-  });
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Play, X, RotateCcw, Star } from 'lucide-react';
+
+export default function Game24() {
+  const [gamePhase, setGamePhase] = useState('name');
+  const [playerName, setPlayerName] = useState('');
+  const [level, setLevel] = useState(1);
+  const [timeElapsed, setTimeElapsed] = useState(0);
+  const [startTime, setStartTime] = useState(null);
+  const [cards, setCards] = useState([]);
+  const [selectedCards, setSelectedCards] = useState([]);
+  const [solvedCount, setSolvedCount] = useState(0);
+  const [wrongCount, setWrongCount] = useState(0);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const levelConfig = {
     1: { cardCount: 2, targetQuestions: 24, timeLimit: 60 },
@@ -22,28 +20,7 @@ function Game24() {
     3: { cardCount: 4, targetQuestions: 24, timeLimit: null }
   };
 
-  // Possible combinations that exactly make 24
-  const twentyFourCombinations = [
-    { cards: [6, 4], solution: '6 * 4' },
-    { cards: [8, 3], solution: '8 * 3' },
-    { cards: [12, 2], solution: '12 * 2' },
-    { cards: [6, 6], solution: '6 + 6 * 3' },
-    { cards: [6, 6], solution: '(6 + 6) * 2' },
-    { cards: [8, 3], solution: '8 + 3 * 4' },
-    { cards: [9, 4], solution: '9 * 4 - 12' },
-    { cards: [10, 6], solution: '10 + 6 * 2' }
-  ];
-
-  // More complex combinations for levels 2 and 3
-  const multiCardCombinations = [
-    { cards: [3, 4, 5, 6], solution: '(6 - 3) * (5 - 4)' },
-    { cards: [1, 5, 5, 5], solution: '(5 + 5 - 1) * 5' },
-    { cards: [3, 3, 8, 2], solution: '(3 + 3) * (8 / 2)' },
-    { cards: [6, 6, 6, 6], solution: '(6 + 6 + 6) * 6 / 6' }
-  ];
-
-  // Timer effect
-  React.useEffect(() => {
+  useEffect(() => {
     let timer;
     if (gamePhase === 'playing' && startTime) {
       timer = setInterval(() => {
@@ -59,32 +36,100 @@ function Game24() {
     return () => clearInterval(timer);
   }, [gamePhase, startTime, level]);
 
-  function generateCards() {
-    let newCards = [];
+  const canMake24 = (numbers) => {
+    if (numbers.length === 1) {
+      return Math.abs(numbers[0] - 24) < 0.0001;
+    }
+
+    for (let i = 0; i < numbers.length; i++) {
+      for (let j = i + 1; j < numbers.length; j++) {
+        const a = numbers[i];
+        const b = numbers[j];
+        const remainingNumbers = numbers.filter((_, index) => index !== i && index !== j);
+
+        // Try all operations
+        const results = [
+          a + b,
+          Math.abs(a - b),
+          a * b,
+          b !== 0 ? Math.max(a, b) / Math.min(a, b) : null
+        ].filter(x => x !== null);
+
+        for (const result of results) {
+          if (remainingNumbers.length === 0 && Math.abs(result - 24) < 0.0001) {
+            return true;
+          }
+          if (remainingNumbers.length > 0 && canMake24([...remainingNumbers, result])) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  };
+
+  const generateCards = () => {
+    const currentConfig = levelConfig[level];
+    let newCards;
+    let attempts = 0;
     
-    if (level === 1) {
-      // Select a random combination that makes exactly 24
-      const combination = twentyFourCombinations[
-        Math.floor(Math.random() * twentyFourCombinations.length)
-      ];
-      newCards = combination.cards;
-    } else if (level === 2 || level === 3) {
-      // For levels 2 and 3, use more complex combinations
-      const combinations = level === 2 
-        ? twentyFourCombinations.concat(multiCardCombinations.slice(0, 2))
-        : twentyFourCombinations.concat(multiCardCombinations);
-      
-      const combination = combinations[
-        Math.floor(Math.random() * combinations.length)
-      ];
-      newCards = combination.cards;
+    // Known solvable combinations for each level
+    const knownCombinations = {
+      1: [
+        [3, 8],     // 3 × 8 = 24
+        [4, 6],     // 4 × 6 = 24
+        [12, 2],    // 12 × 2 = 24
+        [24, 1],    // 24 × 1 = 24
+        [32, 8],    // 32 - 8 = 24
+        [16, 8],    // 16 + 8 = 24
+      ],
+      2: [
+        [2, 3, 4],  // 2 × 3 × 4 = 24
+        [1, 4, 6],  // (1 + 4) × 6 = 24
+        [2, 6, 6],  // (6 + 6) × 2 = 24
+        [3, 3, 8],  // 3 × 8 = 24
+      ],
+      3: [
+        [1, 2, 3, 4], // (1 + 3) × (2 × 4) = 24
+        [2, 2, 2, 6], // 2 × 2 × 2 × 6 = 24
+        [1, 1, 4, 6], // (1 + 1) × 4 × 6 = 24
+        [2, 3, 4, 4], // 2 × 3 × 4 = 24
+      ]
+    };
+    
+    // First try to generate a random solvable combination
+    do {
+      newCards = [];
+      while (newCards.length < currentConfig.cardCount) {
+        const maxNum = level === 1 ? 32 : 9;
+        const num = Math.floor(Math.random() * maxNum) + 1;
+        if (!newCards.includes(num)) {
+          newCards.push(num);
+        }
+      }
+      attempts++;
+    } while (!canMake24(newCards) && attempts < 20);
+
+    // If we couldn't find a random solvable combination, use a known one
+    if (!canMake24(newCards)) {
+      const combinations = knownCombinations[level];
+      newCards = combinations[Math.floor(Math.random() * combinations.length)];
     }
 
     setCards(newCards);
     setSelectedCards([]);
-  }
+  };
 
-  function handleCardClick(index) {
+  const startGame = () => {
+    setGamePhase('playing');
+    setSolvedCount(0);
+    setWrongCount(0);
+    setTimeElapsed(0);
+    setStartTime(Date.now());
+    generateCards();
+  };
+
+  const handleCardClick = (index) => {
     if (gamePhase === 'playing' && level !== 1) {
       if (selectedCards.includes(index)) {
         setSelectedCards(prev => prev.filter(i => i !== index));
@@ -92,27 +137,23 @@ function Game24() {
         setSelectedCards(prev => [...prev, index]);
       }
     }
-  }
+  };
 
-  function evaluateExpression(num1, num2, operation) {
-    switch (operation) {
-      case '+': return num1 + num2;
-      case '-': return num1 - num2;
-      case '×': return num1 * num2;
-      case '÷': 
-        // Ensure division is safe and meaningful
-        return num2 !== 0 ? num1 / num2 : null;
-      default: return null;
-    }
-  }
-
-  function handleOperation(operation) {
+  const handleOperation = (operation) => {
     if (level === 1) {
-      // Level 1 logic with exactly 2 cards
+      // Level 1 logic
       const [num1, num2] = cards;
-      const result = evaluateExpression(num1, num2, operation);
+      let result;
 
-      if (result === 24) {
+      switch (operation) {
+        case '+': result = num1 + num2; break;
+        case '-': result = Math.abs(num1 - num2); break;
+        case '×': result = num1 * num2; break;
+        case '÷': result = Math.max(num1, num2) / Math.min(num1, num2); break;
+        default: return;
+      }
+
+      if (Math.abs(result - 24) < 0.0001) {
         handleSuccess();
       } else {
         handleWrong();
@@ -123,9 +164,20 @@ function Game24() {
 
       let num1 = cards[selectedCards[0]];
       let num2 = cards[selectedCards[1]];
+      
+      if (operation === '÷') {
+        if (num1 < num2) [num1, num2] = [num2, num1];
+        if (num2 === 0) return;
+      }
 
-      const result = evaluateExpression(num1, num2, operation);
-      if (result === null) return;
+      let result;
+      switch (operation) {
+        case '+': result = num1 + num2; break;
+        case '-': result = Math.abs(num1 - num2); break;
+        case '×': result = num1 * num2; break;
+        case '÷': result = num1 / num2; break;
+        default: return;
+      }
 
       const newCards = [...cards];
       newCards[selectedCards[0]] = result;
@@ -134,16 +186,17 @@ function Game24() {
       setSelectedCards([]);
 
       if (newCards.length === 1) {
-        if (newCards[0] === 24) {
+        if (Math.abs(newCards[0] - 24) < 0.0001) {
           handleSuccess();
         } else {
           handleWrong();
         }
       }
     }
-  }
+  };
 
-  function handleSuccess() {
+  // Update handleSuccess function
+  const handleSuccess = () => {
     const newSolvedCount = solvedCount + 1;
     setSolvedCount(newSolvedCount);
     setShowSuccess(true);
@@ -151,12 +204,32 @@ function Game24() {
 
     if (newSolvedCount === levelConfig[level].targetQuestions) {
       const timeToComplete = Math.floor((Date.now() - startTime) / 1000);
+      // Update level times
       setLevelTimes(prev => ({
         ...prev,
         [`level${level}`]: timeToComplete
       }));
 
       if (level === 3) {
+        // If completed level 3, save score and show rankings
+        const totalTime = timeToComplete + levelTimes.level1 + levelTimes.level2;
+        const newScore = {
+          name: playerName,
+          level1Time: levelTimes.level1,
+          level2Time: levelTimes.level2,
+          level3Time: timeToComplete,
+          totalTime: totalTime,
+          date: new Date().toISOString()
+        };
+
+        setHighScores(prev => {
+          const newHighScores = [...prev, newScore]
+            .sort((a, b) => a.totalTime - b.totalTime)
+            .slice(0, 10);
+          localStorage.setItem('24game_highscores', JSON.stringify(newHighScores));
+          return newHighScores;
+        });
+
         setGamePhase('ranking');
       } else if (timeToComplete <= levelConfig[level].timeLimit) {
         setGamePhase('promoted');
@@ -166,202 +239,208 @@ function Game24() {
     } else {
       generateCards();
     }
-  }
+  };
 
-  function handleWrong() {
+  const handleWrong = () => {
     setWrongCount(prev => prev + 1);
     generateCards();
-  }
+  };
 
-  function startGame() {
-    setGamePhase('playing');
-    setSolvedCount(0);
-    setWrongCount(0);
-    setTimeElapsed(0);
-    setStartTime(Date.now());
-    generateCards();
-  }
+  // Add state for high scores
+  const [highScores, setHighScores] = useState(() => {
+    const saved = localStorage.getItem('24game_highscores');
+    return saved ? JSON.parse(saved) : [];
+  });
 
-  function handlePromotion() {
-    setLevel(prev => prev + 1);
-    setGamePhase('ready');
-    generateCards();
-  }
+  // Save score function
+  const saveScore = () => {
+    const newScore = {
+      name: playerName,
+      level1Time: levelTimes.level1 || 0,
+      level2Time: levelTimes.level2 || 0,
+      level3Time: levelTimes.level3 || 0,
+      totalTime: levelTimes.level1 + levelTimes.level2 + levelTimes.level3,
+      date: new Date().toISOString()
+    };
+
+    const newHighScores = [...highScores, newScore]
+      .sort((a, b) => a.totalTime - b.totalTime)
+      .slice(0, 10); // Keep top 10
+
+    setHighScores(newHighScores);
+    localStorage.setItem('24game_highscores', JSON.stringify(newHighScores));
+  };
+
+  // Add state for level completion times
+  const [levelTimes, setLevelTimes] = useState({
+    level1: 0,
+    level2: 0,
+    level3: 0
+  });
+
+  // Update handlePromotion to save level time
+  const handlePromotion = () => {
+    setLevelTimes(prev => ({
+      ...prev,
+      [`level${level}`]: timeElapsed
+    }));
+    
+    if (level === 3) {
+      saveScore();
+      setGamePhase('ranking');
+    } else {
+      setLevel(prev => prev + 1);
+      setGamePhase('ready');
+      generateCards();
+    }
+  };
 
   if (gamePhase === 'name') {
     return (
-      <div className="w-full max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6">
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-center">Welcome to 24!</h2>
-          <input
-            type="text"
-            value={playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
-            placeholder="Enter your name"
-            className="w-full p-2 border rounded"
-          />
-          <button
-            onClick={() => {
-              if (playerName.trim()) {
-                setGamePhase('ready');
-                generateCards();
-              }
-            }}
-            className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Continue
-          </button>
-        </div>
-      </div>
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-center">Welcome to 24!</h2>
+            <input
+              type="text"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              placeholder="Enter your name"
+              className="w-full p-2 border rounded"
+            />
+            <button
+              onClick={() => {
+                if (playerName.trim()) {
+                  setGamePhase('ready');
+                  generateCards();
+                }
+              }}
+              className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Continue
+            </button>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6">
-      <div className="space-y-6">
-        <div className="text-center mb-4">
-          <div className="flex items-center justify-center gap-2">
-            <svg
-              className="text-yellow-500 w-6 h-6"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-            <h2 className="text-xl font-bold">Level {level}</h2>
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardContent className="p-6">
+        <div className="space-y-6">
+          <div className="text-center mb-4">
+            <div className="flex items-center justify-center gap-2">
+              <Star className="text-yellow-500" size={24} />
+              <h2 className="text-xl font-bold">Level {level}</h2>
+            </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
-          <div>
-            <div className="text-sm text-gray-500">Time</div>
-            <div className="text-lg font-bold">{timeElapsed}s</div>
+          <div className="grid grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+            <div>
+              <div className="text-sm text-gray-500">Time</div>
+              <div className="text-lg font-bold">{timeElapsed}s</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Solved</div>
+              <div className="text-lg font-bold">{solvedCount}/24</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Wrong</div>
+              <div className="text-lg font-bold">{wrongCount}</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Target</div>
+              <div className="text-lg font-bold">{levelConfig[level].timeLimit || '∞'}s</div>
+            </div>
           </div>
-          <div>
-            <div className="text-sm text-gray-500">Solved</div>
-            <div className="text-lg font-bold">{solvedCount}/24</div>
-          </div>
-          <div>
-            <div className="text-sm text-gray-500">Wrong</div>
-            <div className="text-lg font-bold">{wrongCount}</div>
-          </div>
-          <div>
-            <div className="text-sm text-gray-500">Target</div>
-            <div className="text-lg font-bold">{levelConfig[level].timeLimit || '∞'}s</div>
-          </div>
-        </div>
 
-        <div className="flex justify-center space-x-2 sm:space-x-4">
-          {cards.map((card, index) => (
+          <div className="flex justify-center space-x-4">
+            {cards.map((card, index) => (
+              <button
+                key={index}
+                onClick={() => handleCardClick(index)}
+                disabled={gamePhase !== 'playing' || level === 1}
+                className={`
+                  w-16 h-24 bg-white border-2 rounded-lg shadow
+                  transition-all duration-300 ease-in-out
+                  ${selectedCards.includes(index) ? 'border-blue-500 -translate-y-2' : 'border-gray-300'}
+                  ${(gamePhase !== 'playing' || level === 1) ? 'opacity-50' : 'hover:scale-105'}
+                `}
+              >
+                <div className="text-2xl font-bold">{card}</div>
+                {selectedCards.includes(index) && (
+                  <div className="absolute top-1 left-1 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                    {selectedCards.indexOf(index) + 1}
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex justify-center space-x-4">
+            {['+', '-', '×', '÷'].map((op) => (
+              <button
+                key={op}
+                onClick={() => handleOperation(op)}
+                disabled={gamePhase !== 'playing' || (level !== 1 && selectedCards.length !== 2)}
+                className="w-12 h-12 bg-gray-200 rounded-full hover:bg-gray-300 disabled:opacity-50"
+              >
+                <div className="text-xl font-bold">{op}</div>
+              </button>
+            ))}
+          </div>
+
+          {gamePhase === 'ready' && (
             <button
-              key={index}
-              onClick={() => handleCardClick(index)}
-              disabled={gamePhase !== 'playing' || level === 1}
-              className={`
-                w-20 h-32 sm:w-16 sm:h-24
-                bg-white border-4 sm:border-2 rounded-xl sm:rounded-lg shadow-lg
-                transition-all duration-300 ease-in-out
-                active:scale-95 touch-manipulation
-                ${selectedCards.includes(index) 
-                  ? 'border-blue-500 -translate-y-2' 
-                  : 'border-gray-300 hover:border-blue-300'}
-                ${(gamePhase !== 'playing' || level === 1) 
-                  ? 'opacity-50' 
-                  : 'hover:scale-105'}
-                relative overflow-hidden
-              `}
+              onClick={startGame}
+              className="w-full p-3 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center justify-center gap-2"
             >
-              <div className="text-4xl sm:text-2xl font-bold">
-                {card}
+              <Play size={20} /> Start Level {level}
+            </button>
+          )}
+
+          {gamePhase === 'playing' && (
+            <div className="flex gap-4">
+              <button
+                onClick={generateCards}
+                className="flex-1 p-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
+              >
+                Pass
+              </button>
+              <button
+                onClick={() => setGamePhase('finished')}
+                className="flex-1 p-3 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              >
+                End Game
+              </button>
+            </div>
+          )}
+
+          {gamePhase === 'promoted' && (
+            <div className="space-y-4">
+              <div className="text-center p-4 bg-green-100 rounded-lg">
+                <h3 className="text-xl font-bold text-green-800">Level Complete!</h3>
+                <p>Time: {timeElapsed}s | Solved: {solvedCount}</p>
               </div>
-              {selectedCards.includes(index) && (
-                <div className="absolute top-2 left-2 bg-blue-500 text-white rounded-full w-8 h-8 sm:w-5 sm:h-5 flex items-center justify-center text-lg sm:text-xs">
-                  {selectedCards.indexOf(index) + 1}
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex justify-center space-x-3 sm:space-x-4">
-          {['+', '-', '×', '÷'].map((op) => (
-            <button
-              key={op}
-              onClick={() => handleOperation(op)}
-              disabled={gamePhase !== 'playing' || (level !== 1 && selectedCards.length !== 2)}
-              className={`
-                w-16 h-16 sm:w-12 sm:h-12 
-                bg-gray-200 rounded-full
-                shadow-md active:shadow-sm
-                transition-all duration-150
-                active:scale-95 touch-manipulation
-                ${gamePhase === 'playing' && (level === 1 || selectedCards.length === 2) 
-                  ? 'hover:bg-gray-300' 
-                  : 'opacity-50 cursor-not-allowed'}
-              `}
-            >
-              <div className="text-2xl sm:text-xl font-bold">{op}</div>
-            </button>
-          ))}
-        </div>
-
-        {gamePhase === 'ready' && (
-          <button
-            onClick={startGame}
-            className="w-full p-4 sm:p-3 text-lg sm:text-base bg-green-500 text-white rounded-lg hover:bg-green-600 active:scale-95 touch-manipulation"
-          >
-            Start Level {level}
-          </button>
-        )}
-
-        {gamePhase === 'playing' && (
-          <div className="flex gap-4">
-            <button
-              onClick={generateCards}
-              className="flex-1 p-4 sm:p-3 text-lg sm:text-base bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 active:scale-95 touch-manipulation"
-            >
-              Pass
-            </button>
-            <button
-              onClick={() => setGamePhase('finished')}
-              className="flex-1 p-4 sm:p-3 text-lg sm:text-base bg-red-500 text-white rounded-lg hover:bg-red-600 active:scale-95 touch-manipulation"
-            >
-              End Game
-            </button>
-          </div>
-        )}
-
-        {gamePhase === 'promoted' && (
-          <div className="space-y-4">
-            <div className="text-center p-4 bg-green-100 rounded-lg">
-              <h3 className="text-xl font-bold text-green-800">Level Complete!</h3>
-              <p>Time: {timeElapsed}s | Solved: {solvedCount}</p>
+              <button
+                onClick={handlePromotion}
+                className="w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              >
+                Next Level
+              </button>
             </div>
-            <button
-              onClick={handlePromotion}
-              className="w-full p-4 sm:p-3 text-lg sm:text-base bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:scale-95 touch-manipulation"
-            >
-              Next Level
-            </button>
-          </div>
-        )}
+          )}
 
-        {showSuccess && (
-          <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-green-500 text-white px-8 py-4 rounded-lg text-2xl font-bold animate-bounce">
-              Perfect!
+          {showSuccess && (
+            <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
+              <div className="bg-green-500 text-white px-8 py-4 rounded-lg text-2xl font-bold animate-bounce">
+                Perfect!
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-    </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
-
-// Mount the React component
-ReactDOM.render(<Game24 />, document.getElementById('root'));
