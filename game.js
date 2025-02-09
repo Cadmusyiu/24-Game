@@ -22,6 +22,26 @@ function Game24() {
     3: { cardCount: 4, targetQuestions: 24, timeLimit: null }
   };
 
+  // Possible combinations that exactly make 24
+  const twentyFourCombinations = [
+    { cards: [6, 4], solution: '6 * 4' },
+    { cards: [8, 3], solution: '8 * 3' },
+    { cards: [12, 2], solution: '12 * 2' },
+    { cards: [6, 6], solution: '6 + 6 * 3' },
+    { cards: [6, 6], solution: '(6 + 6) * 2' },
+    { cards: [8, 3], solution: '8 + 3 * 4' },
+    { cards: [9, 4], solution: '9 * 4 - 12' },
+    { cards: [10, 6], solution: '10 + 6 * 2' }
+  ];
+
+  // More complex combinations for levels 2 and 3
+  const multiCardCombinations = [
+    { cards: [3, 4, 5, 6], solution: '(6 - 3) * (5 - 4)' },
+    { cards: [1, 5, 5, 5], solution: '(5 + 5 - 1) * 5' },
+    { cards: [3, 3, 8, 2], solution: '(3 + 3) * (8 / 2)' },
+    { cards: [6, 6, 6, 6], solution: '(6 + 6 + 6) * 6 / 6' }
+  ];
+
   // Timer effect
   React.useEffect(() => {
     let timer;
@@ -40,35 +60,24 @@ function Game24() {
   }, [gamePhase, startTime, level]);
 
   function generateCards() {
-    const currentConfig = levelConfig[level];
     let newCards = [];
     
     if (level === 1) {
-      // Predefined sets of cards that can make 24
-      const twentyFourSets = [
-        [6, 6, 6, 6],
-        [3, 3, 8, 10],
-        [4, 4, 6, 10],
-        [1, 3, 8, 12],
-        [1, 4, 6, 13],
-        [2, 3, 4, 15],
-        [2, 4, 4, 14],
-        [3, 3, 4, 14],
-        [3, 4, 4, 13],
-        [3, 5, 5, 11]
+      // Select a random combination that makes exactly 24
+      const combination = twentyFourCombinations[
+        Math.floor(Math.random() * twentyFourCombinations.length)
       ];
+      newCards = combination.cards;
+    } else if (level === 2 || level === 3) {
+      // For levels 2 and 3, use more complex combinations
+      const combinations = level === 2 
+        ? twentyFourCombinations.concat(multiCardCombinations.slice(0, 2))
+        : twentyFourCombinations.concat(multiCardCombinations);
       
-      // Randomly select a set that guarantees 24 is possible
-      newCards = twentyFourSets[Math.floor(Math.random() * twentyFourSets.length)];
-    } else {
-      // Existing logic for other levels
-      while (newCards.length < currentConfig.cardCount) {
-        const maxNum = level === 2 ? 9 : 9;
-        const num = Math.floor(Math.random() * maxNum) + 1;
-        if (!newCards.includes(num)) {
-          newCards.push(num);
-        }
-      }
+      const combination = combinations[
+        Math.floor(Math.random() * combinations.length)
+      ];
+      newCards = combination.cards;
     }
 
     setCards(newCards);
@@ -85,29 +94,25 @@ function Game24() {
     }
   }
 
-  function calculateResult(num1, num2, operation) {
+  function evaluateExpression(num1, num2, operation) {
     switch (operation) {
       case '+': return num1 + num2;
-      case '-': return Math.abs(num1 - num2);
+      case '-': return num1 - num2;
       case '×': return num1 * num2;
       case '÷': 
         // Ensure division is safe and meaningful
-        return num1 >= num2 && num2 !== 0 ? num1 / num2 : null;
+        return num2 !== 0 ? num1 / num2 : null;
       default: return null;
     }
   }
 
-  function isCloseToTwentyFour(num) {
-    return Math.abs(num - 24) < 0.0001;
-  }
-
   function handleOperation(operation) {
     if (level === 1) {
-      // Level 1 logic
+      // Level 1 logic with exactly 2 cards
       const [num1, num2] = cards;
-      const result = calculateResult(num1, num2, operation);
+      const result = evaluateExpression(num1, num2, operation);
 
-      if (result !== null && isCloseToTwentyFour(result)) {
+      if (result === 24) {
         handleSuccess();
       } else {
         handleWrong();
@@ -119,7 +124,7 @@ function Game24() {
       let num1 = cards[selectedCards[0]];
       let num2 = cards[selectedCards[1]];
 
-      const result = calculateResult(num1, num2, operation);
+      const result = evaluateExpression(num1, num2, operation);
       if (result === null) return;
 
       const newCards = [...cards];
@@ -129,7 +134,7 @@ function Game24() {
       setSelectedCards([]);
 
       if (newCards.length === 1) {
-        if (isCloseToTwentyFour(newCards[0])) {
+        if (newCards[0] === 24) {
           handleSuccess();
         } else {
           handleWrong();
