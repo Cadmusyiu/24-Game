@@ -63,42 +63,29 @@ function Game24() {
     let newCards = [];
     
     if (level === 1) {
-      // Strictly 2-card combinations that make 24
-      const twoCardCombinations = [
-        [6, 4],   // 6 * 4 = 24
-        [8, 3],   // 8 * 3 = 24
-        [12, 2],  // 12 * 2 = 24
-        [6, 6]    // Different 2-card combination
-      ];
-      
-      // Select a random 2-card combination
-      newCards = twoCardCombinations[
-        Math.floor(Math.random() * twoCardCombinations.length)
-      ];
+      // Ensure exactly 2 cards
+      while (newCards.length < 2) {
+        const num = Math.floor(Math.random() * 12) + 1;
+        if (!newCards.includes(num)) {
+          newCards.push(num);
+        }
+      }
     } else if (level === 2) {
-      // 3-card combinations
-      const threeCardCombinations = [
-        [3, 4, 5],
-        [1, 8, 3],
-        [2, 6, 4],
-        [3, 3, 6]
-      ];
-      
-      newCards = threeCardCombinations[
-        Math.floor(Math.random() * threeCardCombinations.length)
-      ];
+      // Ensure 3 cards
+      while (newCards.length < 3) {
+        const num = Math.floor(Math.random() * 9) + 1;
+        if (!newCards.includes(num)) {
+          newCards.push(num);
+        }
+      }
     } else if (level === 3) {
-      // 4-card combinations
-      const fourCardCombinations = [
-        [3, 3, 8, 2],
-        [1, 5, 5, 5],
-        [6, 6, 6, 6],
-        [2, 4, 4, 6]
-      ];
-      
-      newCards = fourCardCombinations[
-        Math.floor(Math.random() * fourCardCombinations.length)
-      ];
+      // Ensure 4 cards
+      while (newCards.length < 4) {
+        const num = Math.floor(Math.random() * 9) + 1;
+        if (!newCards.includes(num)) {
+          newCards.push(num);
+        }
+      }
     }
 
     setCards(newCards);
@@ -374,7 +361,7 @@ function Game24() {
 
         {showSuccess && (
           <div className="fixed inset-0 flex items-center justify-center pointer-events-none top-1/4">
-            <div className="bg-green-500 text-white px-8 py-4 rounded-lg text-2xl font-bold animate-bounce">
+            <div className="bg-green-500 text-white px-4 py-2 rounded-lg text-lg font-bold animate-bounce">
               Perfect!
             </div>
           </div>
