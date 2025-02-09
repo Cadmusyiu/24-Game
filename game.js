@@ -1,7 +1,3 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Play, X, RotateCcw, Star } from 'lucide-react';
-
 export default function Game24() {
   const [gamePhase, setGamePhase] = useState('name');
   const [playerName, setPlayerName] = useState('');
