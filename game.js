@@ -1,4 +1,164 @@
-// Create the game component
+function findSolution(cards, level) {
+    const operators = ['+', '-', '×', '÷'];
+    
+    // Special handling for level 1
+    if (level === 1) {
+      for (let op of operators) {
+        const result = evaluateExpression(cards[0], cards[1], op);
+        if (result !== null && Math.abs(result - 24) < 0.0001) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // Existing solution finding logic for levels 2 and 3
+    for (let a = 0; a < cards.length; a++) {
+      for (let b = 0; b < cards.length; b++) {
+        if (a === b) continue;
+        
+        // Remaining cards for third operation
+        const remainingCards = cards.filter((_, idx) => idx !== a && idx !== b);
+        
+        for (let op1 of operators) {
+          // First operation result
+          const firstRes = evaluateExpression(cards[a], cards[b], op1);
+          if (firstRes === null) continue;
+
+          // If only two cards, check if result is 24
+          if (cards.length === 2) {
+            if (Math.abs(firstRes - 24) < 0.0001) {
+              return true;
+            }
+            continue;
+          }
+
+          // Three or four card scenarios
+          for (let c = 0; c < remainingCards.length; c++) {
+            for (let op2 of operators) {
+              // Second operation
+              const secondRes = evaluateExpression(firstRes, remainingCards[c], op2);
+              if (secondRes === null) continue;
+
+              // For 3-card scenario, check if final result is 24
+              if (cards.length === 3) {
+                if (Math.abs(secondRes - 24) < 0.0001) {
+                  return true;
+                }
+                continue;
+              }
+
+              // Four card scenario - try one more operation
+              const finalRemainingCards = remainingCards.filter((_, idx) => idx !== c);
+              if (finalRemainingCards.length === 1) {
+                for (let op3 of operators) {
+                  const finalRes = evaluateExpression(secondRes, finalRemainingCards[0], op3);
+                  if (finalRes !== null && Math.abs(finalRes - 24) < 0.0001) {
+                    return true;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  function generateCards() {
+    let newCards = [];
+    let attempts = 0;
+    const maxAttempts = 100;
+
+    if (level === 1) {
+      // Ensure exactly 2 cards with a solution to 24, randomly from 1-32
+      while (newCards.length < 2 && attempts < maxAttempts) {
+        newCards = [
+          Math.floor(Math.random() * 32) + 1,
+          Math.floor(Math.random() * 32) + 1
+        ];
+        
+        // Ensure unique cards
+        if (newCards[0] === newCards[1]) {
+          newCards = [];
+          continue;
+        }
+
+        // Check if these cards can make 24
+        if (!findSolution(newCards, level)) {
+          newCards = [];
+        }
+        attempts++;
+      }
+    } else if (level === 2) {
+      // Ensure 3 cards with special operation rules
+      while (newCards.length < 3 && attempts < maxAttempts) {
+        newCards = [
+          Math.floor(Math.random() * 9) + 1,
+          Math.floor(Math.random() * 9) + 1,
+          Math.floor(Math.random() * 9) + 1
+        ];
+        
+        // Ensure unique cards
+        if (new Set(newCards).size !== 3) {
+          newCards = [];
+          continue;
+        }
+
+        // Check if these cards can make 24
+        if (!findSolution(newCards, level)) {
+          newCards = [];
+        }
+        attempts++;
+      }
+    } else if (level === 3) {
+      // Ensure 4 cards with a solution to 24
+      while (newCards.length < 4 && attempts < maxAttempts) {
+        newCards = [
+          Math.floor(Math.random() * 9) + 1,
+          Math.floor(Math.random() * 9) + 1,
+          Math.floor(Math.random() * 9) + 1,
+          Math.floor(Math.random() * 9) + 1
+        ];
+        
+        // Ensure unique cards
+        if (new Set(newCards).size !== 4) {
+          newCards = [];
+          continue;
+        }
+
+        // Check if these cards can make 24
+        if (!findSolution(newCards, level)) {
+          newCards = [];
+        }
+        attempts++;
+      }
+    }
+
+    // Fallback if no solution found
+    if (newCards.length === 0) {
+      // Hardcoded known solutions if random generation fails
+      newCards = level === 1 ? [6, 4] : 
+                 level === 2 ? [3, 4, 5] : 
+                 [3, 3, 8, 2];
+    }
+
+    setCards(newCards);
+    setSelectedCards([]);
+  }
+
+  function evaluateExpression(num1, num2, operation) {
+    switch (operation) {
+      case '+': return num1 + num2;
+      case '-': return Math.abs(num1 - num2);
+      case '×': return num1 * num2;
+      case '÷': 
+        // Use larger number divided by smaller number
+        return Math.max(num1, num2) / Math.min(num1, num2);
+      default: return null;
+    }
+  }// Create the game component
 function Game24() {
   const [gamePhase, setGamePhase] = React.useState('name');
   const [playerName, setPlayerName] = React.useState('');
