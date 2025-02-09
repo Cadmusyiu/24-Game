@@ -373,7 +373,7 @@ function Game24() {
         )}
 
         {showSuccess && (
-          <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
+          <div className="fixed inset-0 flex items-center justify-center pointer-events-none top-1/4">
             <div className="bg-green-500 text-white px-8 py-4 rounded-lg text-2xl font-bold animate-bounce">
               Perfect!
             </div>
