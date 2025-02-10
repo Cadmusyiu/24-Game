@@ -1,3 +1,38 @@
+// Import required components from React
+const { useState, useEffect } = React;
+const { Card, CardContent } = {
+  Card: ({ children, className }) => (
+    <div className={`bg-white rounded-lg shadow-lg ${className}`}>{children}</div>
+  ),
+  CardContent: ({ children, className }) => (
+    <div className={`p-6 ${className}`}>{children}</div>
+  ),
+};
+const { Play, X, RotateCcw, Star } = {
+  Play: ({ size }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+    </svg>
+  ),
+  X: ({ size }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  ),
+  RotateCcw: ({ size }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M3 2v6h6"></path>
+      <path d="M3 13a9 9 0 1 0 3-7.7L3 8"></path>
+    </svg>
+  ),
+  Star: ({ size }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+    </svg>
+  ),
+};
+
 export default function Game24() {
   const [gamePhase, setGamePhase] = useState('name');
   const [playerName, setPlayerName] = useState('');
