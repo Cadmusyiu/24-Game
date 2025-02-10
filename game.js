@@ -33,7 +33,7 @@ const { Play, X, RotateCcw, Star } = {
   ),
 };
 
-export default function Game24() {
+function Game24() {
   const [gamePhase, setGamePhase] = useState('name');
   const [playerName, setPlayerName] = useState('');
   const [level, setLevel] = useState(1);
@@ -475,3 +475,4 @@ export default function Game24() {
     </Card>
   );
 }
+ReactDOM.render(<Game24 />, document.getElementById('root'));
