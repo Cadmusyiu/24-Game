@@ -244,3 +244,6 @@ const Game24 = () => {
 };
 
 export default Game24;
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<Game24 />);
