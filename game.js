@@ -366,3 +366,20 @@ const Game24 = () => {
             )}
         </div>
     );
+
+
+// Main render
+    return (
+        <div className="min-h-screen bg-gray-100 p-4 flex items-center justify-center">
+            {gamePhase === 'splash' && <SplashScreen />}
+            {gamePhase === 'name' && <NameInput />}
+            {gamePhase === 'levels' && <LevelSelection />}
+            {gamePhase === 'playing' && <GameBoard />}
+        </div>
+    );
+};
+
+// Create root and render the app
+const container = document.getElementById('root');
+const root = ReactDOM.createRoot(container);
+root.render(<Game24 />);
