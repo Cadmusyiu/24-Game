@@ -1,10 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Test</title>
+    <title>24 Game</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
-    <h1>Hello World</h1>
-    <p>Testing GitHub Pages</p>
+    <div id="root"></div>
+    <script>
+        const Game24 = () => {
+            const [gamePhase, setGamePhase] = React.useState('splash');
+            
+            // Simple splash screen to test
+            return (
+                <div className="min-h-screen bg-gray-100 p-4 flex items-center justify-center">
+                    <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+                        <div className="text-6xl font-bold text-blue-600">24</div>
+                        <p className="mt-4 text-gray-600">The Math Challenge</p>
+                        <button 
+                            className="mt-8 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                            onClick={() => console.log('clicked')}
+                        >
+                            Start Game
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        // Render the app
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(React.createElement(Game24));
+    </script>
 </body>
 </html>
