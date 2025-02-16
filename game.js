@@ -1,3 +1,4 @@
+// Game24.js
 const Game24 = () => {
   const [gamePhase, setGamePhase] = React.useState('splash');
   const [playerName, setPlayerName] = React.useState('');
@@ -243,7 +244,9 @@ const Game24 = () => {
   );
 };
 
-// Create root and render the app
-const rootElement = document.getElementById('root');
-const root = ReactDOM.createRoot(rootElement);
-root.render(<Game24 />);
+// Wait for DOM to be loaded and render the app
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.getElementById('root');
+  const root = ReactDOM.createRoot(container);
+  root.render(<Game24 />);
+});
