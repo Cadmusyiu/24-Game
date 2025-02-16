@@ -1,79 +1,72 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Play, Lock, Trophy, ArrowRight, Star, RotateCcw, X } from 'lucide-react';
-
 const Game24 = () => {
-  const [gamePhase, setGamePhase] = useState('splash');
-  const [playerName, setPlayerName] = useState('');
-  const [level, setLevel] = useState(1);
-  const [unlockedLevels, setUnlockedLevels] = useState([1]);
-  const [highScores, setHighScores] = useState(() => {
+  const [gamePhase, setGamePhase] = React.useState('splash');
+  const [playerName, setPlayerName] = React.useState('');
+  const [level, setLevel] = React.useState(1);
+  const [unlockedLevels, setUnlockedLevels] = React.useState([1]);
+  const [highScores, setHighScores] = React.useState(() => {
     const saved = localStorage.getItem('24game_highscores');
     return saved ? JSON.parse(saved) : [];
   });
-  const [levelTimes, setLevelTimes] = useState({
-    level1: 0,
-    level2: 0,
-    level3: 0
-  });
 
   // Splash Screen Component
-  const SplashScreen = () => (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardContent className="p-8 text-center space-y-8">
-        <div className="space-y-4">
-          <div className="text-6xl font-bold relative inline-block">
-            <span className="text-blue-600">24</span>
-            <div className="absolute -right-12 top-0 flex flex-col gap-1">
-              <span className="text-2xl text-green-500">+</span>
-              <span className="text-2xl text-red-500">-</span>
-              <span className="text-2xl text-yellow-500">×</span>
-              <span className="text-2xl text-purple-500">÷</span>
+  const SplashScreen = () => {
+    return (
+      <div className="w-full max-w-2xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg p-8 text-center space-y-8">
+          <div className="space-y-4">
+            <div className="text-6xl font-bold relative inline-block">
+              <span className="text-blue-600">24</span>
+              <div className="absolute -right-12 top-0 flex flex-col gap-1">
+                <span className="text-2xl text-green-500">+</span>
+                <span className="text-2xl text-red-500">-</span>
+                <span className="text-2xl text-yellow-500">×</span>
+                <span className="text-2xl text-purple-500">÷</span>
+              </div>
             </div>
+            <p className="text-gray-600 text-xl">The Math Challenge</p>
           </div>
-          <p className="text-gray-600 text-xl">The Math Challenge</p>
+          <button
+            onClick={() => setGamePhase('name')}
+            className="w-48 p-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 mx-auto flex items-center justify-center gap-2"
+          >
+            Start Game
+          </button>
         </div>
-        <button
-          onClick={() => setGamePhase('name')}
-          className="w-48 p-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 mx-auto"
-        >
-          <Play size={24} />
-          Start Game
-        </button>
-      </CardContent>
-    </Card>
-  );
+      </div>
+    );
+  };
 
   // Name Input Component
-  const NameInput = () => (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardContent className="p-8">
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-center">Welcome to 24!</h2>
-          <div className="space-y-4">
-            <input
-              type="text"
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              placeholder="Enter your name"
-              className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-            />
-            <button
-              onClick={() => {
-                if (playerName.trim()) {
-                  setGamePhase('levels');
-                }
-              }}
-              className="w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2"
-            >
-              <ArrowRight size={20} />
-              Continue
-            </button>
+  const NameInput = () => {
+    return (
+      <div className="w-full max-w-2xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-center">Welcome to 24!</h2>
+            <div className="space-y-4">
+              <input
+                type="text"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                placeholder="Enter your name"
+                className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+              />
+              <button
+                onClick={() => {
+                  if (playerName.trim()) {
+                    setGamePhase('levels');
+                  }
+                }}
+                className="w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              >
+                Continue
+              </button>
+            </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
-  );
+      </div>
+    );
+  };
 
   // Level Selection Component
   const LevelSelection = () => {
@@ -84,8 +77,8 @@ const Game24 = () => {
     ];
 
     return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardContent className="p-8">
+      <div className="w-full max-w-2xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="space-y-6">
             <h2 className="text-2xl font-bold text-center mb-6">Select Level</h2>
             <div className="grid gap-4">
@@ -112,235 +105,140 @@ const Game24 = () => {
                       <h3 className="text-xl font-bold">Level {levelData.number}: {levelData.title}</h3>
                       <p className="text-gray-600">{levelData.description}</p>
                     </div>
-                    {unlockedLevels.includes(levelData.number) ? (
-                      <Play size={24} className="text-blue-500" />
-                    ) : (
-                      <Lock size={24} className="text-gray-400" />
-                    )}
+                    <div className={`text-${unlockedLevels.includes(levelData.number) ? 'blue' : 'gray'}-500`}>
+                      {unlockedLevels.includes(levelData.number) ? '✓' : '🔒'}
+                    </div>
                   </div>
                 </button>
               ))}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   };
 
-  // Rankings Component
-  const Rankings = () => (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardContent className="p-8">
-        <div className="space-y-6">
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <Trophy size={24} className="text-yellow-500" />
-            <h2 className="text-2xl font-bold">Leaderboard</h2>
-          </div>
-          <div className="overflow-hidden rounded-lg border border-gray-200">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Rank</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Name</th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Score</th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Time</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {highScores.map((score, index) => (
-                  <tr key={index} className={index < 3 ? 'bg-yellow-50' : ''}>
-                    <td className="px-4 py-3 text-sm">
-                      {index + 1}
-                      {index < 3 && " 🏆"}
-                    </td>
-                    <td className="px-4 py-3 text-sm font-medium">{score.name}</td>
-                    <td className="px-4 py-3 text-sm text-right">{score.solvedCount}</td>
-                    <td className="px-4 py-3 text-sm text-right">{score.totalTime}s</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <button
-            onClick={() => setGamePhase('levels')}
-            className="w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-          >
-            Play Again
-          </button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-
-  // GameBoard Component
+  // Game Board Component
   const GameBoard = () => {
-    const [timeElapsed, setTimeElapsed] = useState(0);
-    const [startTime, setStartTime] = useState(null);
-    const [cards, setCards] = useState([]);
-    const [selectedCards, setSelectedCards] = useState([]);
-    const [solvedCount, setSolvedCount] = useState(0);
-    const [wrongCount, setWrongCount] = useState(0);
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [isPlaying, setIsPlaying] = useState(false);
+    const [timeElapsed, setTimeElapsed] = React.useState(0);
+    const [startTime, setStartTime] = React.useState(Date.now());
+    const [cards, setCards] = React.useState([]);
+    const [selectedCards, setSelectedCards] = React.useState([]);
+    const [solvedCount, setSolvedCount] = React.useState(0);
+    const [wrongCount, setWrongCount] = React.useState(0);
+    const [isPlaying, setIsPlaying] = React.useState(true);
 
-    const levelConfig = {
-      1: { cardCount: 2, targetQuestions: 24, timeLimit: 60 },
-      2: { cardCount: 3, targetQuestions: 24, timeLimit: 240 },
-      3: { cardCount: 4, targetQuestions: 24, timeLimit: null }
-    };
-
-    const canMake24 = (numbers) => {
-      if (numbers.length === 1) {
-        return Math.abs(numbers[0] - 24) < 0.0001;
-      }
-
-      for (let i = 0; i < numbers.length; i++) {
-        for (let j = i + 1; j < numbers.length; j++) {
-          const a = numbers[i];
-          const b = numbers[j];
-          const remainingNumbers = numbers.filter((_, index) => index !== i && index !== j);
-
-          const results = [
-            a + b,
-            Math.abs(a - b),
-            a * b,
-            b !== 0 ? Math.max(a, b) / Math.min(a, b) : null
-          ].filter(x => x !== null);
-
-          for (const result of results) {
-            if (remainingNumbers.length === 0 && Math.abs(result - 24) < 0.0001) {
-              return true;
-            }
-            if (remainingNumbers.length > 0 && canMake24([...remainingNumbers, result])) {
-              return true;
-            }
-          }
-        }
-      }
-      return false;
-    };
+    React.useEffect(() => {
+      generateCards();
+      const timer = setInterval(() => {
+        setTimeElapsed(Math.floor((Date.now() - startTime) / 1000));
+      }, 1000);
+      return () => clearInterval(timer);
+    }, []);
 
     const generateCards = () => {
-      const currentConfig = levelConfig[level];
-      let newCards;
-      let attempts = 0;
-      
-      const knownCombinations = {
-        1: [[3, 8], [4, 6], [12, 2], [24, 1], [32, 8], [16, 8]],
-        2: [[2, 3, 4], [1, 4, 6], [2, 6, 6], [3, 3, 8]],
-        3: [[1, 2, 3, 4], [2, 2, 2, 6], [1, 1, 4, 6], [2, 3, 4, 4]]
-      };
-      
-      do {
-        newCards = [];
-        while (newCards.length < currentConfig.cardCount) {
-          const maxNum = level === 1 ? 32 : 9;
-          const num = Math.floor(Math.random() * maxNum) + 1;
-          if (!newCards.includes(num)) {
-            newCards.push(num);
-          }
-        }
-        attempts++;
-      } while (!canMake24(newCards) && attempts < 20);
-
-      if (!canMake24(newCards)) {
-        const combinations = knownCombinations[level];
-        newCards = combinations[Math.floor(Math.random() * combinations.length)];
+      const numbers = [];
+      for (let i = 0; i < (level + 1); i++) {
+        numbers.push(Math.floor(Math.random() * 9) + 1);
       }
-
-      setCards(newCards);
-      setSelectedCards([]);
+      setCards(numbers);
     };
 
     const handleCardClick = (index) => {
-      if (isPlaying && level !== 1) {
-        if (selectedCards.includes(index)) {
-          setSelectedCards(prev => prev.filter(i => i !== index));
-        } else if (selectedCards.length < 2) {
-          setSelectedCards(prev => [...prev, index]);
-        }
+      if (selectedCards.includes(index)) {
+        setSelectedCards(selectedCards.filter(i => i !== index));
+      } else if (selectedCards.length < 2) {
+        setSelectedCards([...selectedCards, index]);
       }
     };
 
-    const handleOperation = (operation) => {
-      if (level === 1) {
-        const [num1, num2] = cards;
-        let result;
+    const handleOperation = (op) => {
+      if (selectedCards.length !== 2) return;
+      
+      const num1 = cards[selectedCards[0]];
+      const num2 = cards[selectedCards[1]];
+      let result;
 
-        switch (operation) {
-          case '+': result = num1 + num2; break
-    
-    const handleSuccess = () => {
-      const newSolvedCount = solvedCount + 1;
-      setSolvedCount(newSolvedCount);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 1000);
+      switch (op) {
+        case '+': result = num1 + num2; break;
+        case '-': result = Math.abs(num1 - num2); break;
+        case '×': result = num1 * num2; break;
+        case '÷': 
+          if (num2 === 0) return;
+          result = num1 / num2;
+          break;
+        default: return;
+      }
 
-      if (newSolvedCount >= levelConfig[level].targetQuestions) {
-        // Update level times and high scores
-        const newTime = Math.floor((Date.now() - startTime) / 1000);
-        setLevelTimes(prev => ({
-          ...prev,
-          [`level${level}`]: newTime
-        }));
+      const newCards = cards.filter((_, i) => !selectedCards.includes(i));
+      newCards.push(result);
+      setCards(newCards);
+      setSelectedCards([]);
 
-        if (level === 3) {
-          const totalTime = newTime + levelTimes.level1 + levelTimes.level2;
-          const newScore = {
-            name: playerName,
-            solvedCount: newSolvedCount,
-            totalTime,
-            date: new Date().toISOString()
-          };
-
-          setHighScores(prev => {
-            const newHighScores = [...prev, newScore]
-              .sort((a, b) => b.solvedCount - a.solvedCount || a.totalTime - b.totalTime)
-              .slice(0, 10);
-            localStorage.setItem('24game_highscores', JSON.stringify(newHighScores));
-            return newHighScores;
-          });
-
-          setGamePhase('ranking');
-        } else {
-          setUnlockedLevels(prev => [...new Set([...prev, level + 1])]);
+      if (newCards.length === 1 && Math.abs(newCards[0] - 24) < 0.001) {
+        setSolvedCount(solvedCount + 1);
+        if (solvedCount + 1 >= 5) {
+          if (level < 3) {
+            setUnlockedLevels([...unlockedLevels, level + 1]);
+          }
           setGamePhase('levels');
+        } else {
+          generateCards();
         }
-      } else {
-        generateCards();
       }
     };
 
     return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardContent className="p-6">
-          {/* Game board UI remains the same... */}
-        </CardContent>
-      </Card>
+      <div className="w-full max-w-2xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          <div className="space-y-6">
+            <div className="flex justify-between">
+              <div>Level: {level}</div>
+              <div>Time: {timeElapsed}s</div>
+              <div>Solved: {solvedCount}/5</div>
+            </div>
+            <div className="flex justify-center gap-4">
+              {cards.map((card, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleCardClick(index)}
+                  className={`w-16 h-24 text-2xl font-bold rounded-lg shadow
+                    ${selectedCards.includes(index) ? 'bg-blue-100 border-2 border-blue-500' : 'bg-white border border-gray-200'}`}
+                >
+                  {card}
+                </button>
+              ))}
+            </div>
+            <div className="flex justify-center gap-4">
+              {['+', '-', '×', '÷'].map(op => (
+                <button
+                  key={op}
+                  onClick={() => handleOperation(op)}
+                  className="w-12 h-12 text-xl font-bold bg-gray-100 rounded-full hover:bg-gray-200"
+                >
+                  {op}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setGamePhase('levels')}
+              className="w-full p-3 bg-red-500 text-white rounded-lg hover:bg-red-600"
+            >
+              End Game
+            </button>
+          </div>
+        </div>
+      </div>
     );
   };
 
-  // Main render logic
-  const renderGamePhase = () => {
-    switch (gamePhase) {
-      case 'splash':
-        return <SplashScreen />;
-      case 'name':
-        return <NameInput />;
-      case 'levels':
-        return <LevelSelection />;
-      case 'playing':
-        return <GameBoard />;
-      case 'ranking':
-        return <Rankings />;
-      default:
-        return <SplashScreen />;
-    }
-  };
-
+  // Main render
   return (
     <div className="min-h-screen bg-gray-100 p-4 flex items-center justify-center">
-      {renderGamePhase()}
+      {gamePhase === 'splash' && <SplashScreen />}
+      {gamePhase === 'name' && <NameInput />}
+      {gamePhase === 'levels' && <LevelSelection />}
+      {gamePhase === 'playing' && <GameBoard />}
     </div>
   );
 };
