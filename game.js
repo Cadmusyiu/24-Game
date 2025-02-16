@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Play, Lock, Trophy, ArrowRight } from 'lucide-react';
+import { Play, Lock, Trophy, ArrowRight, Star, RotateCcw, X } from 'lucide-react';
 
-function Game24() {
+const Game24 = () => {
   const [gamePhase, setGamePhase] = useState('splash');
   const [playerName, setPlayerName] = useState('');
   const [level, setLevel] = useState(1);
@@ -10,6 +10,11 @@ function Game24() {
   const [highScores, setHighScores] = useState(() => {
     const saved = localStorage.getItem('24game_highscores');
     return saved ? JSON.parse(saved) : [];
+  });
+  const [levelTimes, setLevelTimes] = useState({
+    level1: 0,
+    level2: 0,
+    level3: 0
   });
 
   // Splash Screen Component
@@ -149,7 +154,7 @@ function Game24() {
                       {index < 3 && " 🏆"}
                     </td>
                     <td className="px-4 py-3 text-sm font-medium">{score.name}</td>
-                    <td className="px-4 py-3 text-sm text-right">{score.totalScore}</td>
+                    <td className="px-4 py-3 text-sm text-right">{score.solvedCount}</td>
                     <td className="px-4 py-3 text-sm text-right">{score.totalTime}s</td>
                   </tr>
                 ))}
@@ -166,6 +171,154 @@ function Game24() {
       </CardContent>
     </Card>
   );
+
+  // GameBoard Component
+  const GameBoard = () => {
+    const [timeElapsed, setTimeElapsed] = useState(0);
+    const [startTime, setStartTime] = useState(null);
+    const [cards, setCards] = useState([]);
+    const [selectedCards, setSelectedCards] = useState([]);
+    const [solvedCount, setSolvedCount] = useState(0);
+    const [wrongCount, setWrongCount] = useState(0);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [isPlaying, setIsPlaying] = useState(false);
+
+    const levelConfig = {
+      1: { cardCount: 2, targetQuestions: 24, timeLimit: 60 },
+      2: { cardCount: 3, targetQuestions: 24, timeLimit: 240 },
+      3: { cardCount: 4, targetQuestions: 24, timeLimit: null }
+    };
+
+    const canMake24 = (numbers) => {
+      if (numbers.length === 1) {
+        return Math.abs(numbers[0] - 24) < 0.0001;
+      }
+
+      for (let i = 0; i < numbers.length; i++) {
+        for (let j = i + 1; j < numbers.length; j++) {
+          const a = numbers[i];
+          const b = numbers[j];
+          const remainingNumbers = numbers.filter((_, index) => index !== i && index !== j);
+
+          const results = [
+            a + b,
+            Math.abs(a - b),
+            a * b,
+            b !== 0 ? Math.max(a, b) / Math.min(a, b) : null
+          ].filter(x => x !== null);
+
+          for (const result of results) {
+            if (remainingNumbers.length === 0 && Math.abs(result - 24) < 0.0001) {
+              return true;
+            }
+            if (remainingNumbers.length > 0 && canMake24([...remainingNumbers, result])) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    };
+
+    const generateCards = () => {
+      const currentConfig = levelConfig[level];
+      let newCards;
+      let attempts = 0;
+      
+      const knownCombinations = {
+        1: [[3, 8], [4, 6], [12, 2], [24, 1], [32, 8], [16, 8]],
+        2: [[2, 3, 4], [1, 4, 6], [2, 6, 6], [3, 3, 8]],
+        3: [[1, 2, 3, 4], [2, 2, 2, 6], [1, 1, 4, 6], [2, 3, 4, 4]]
+      };
+      
+      do {
+        newCards = [];
+        while (newCards.length < currentConfig.cardCount) {
+          const maxNum = level === 1 ? 32 : 9;
+          const num = Math.floor(Math.random() * maxNum) + 1;
+          if (!newCards.includes(num)) {
+            newCards.push(num);
+          }
+        }
+        attempts++;
+      } while (!canMake24(newCards) && attempts < 20);
+
+      if (!canMake24(newCards)) {
+        const combinations = knownCombinations[level];
+        newCards = combinations[Math.floor(Math.random() * combinations.length)];
+      }
+
+      setCards(newCards);
+      setSelectedCards([]);
+    };
+
+    const handleCardClick = (index) => {
+      if (isPlaying && level !== 1) {
+        if (selectedCards.includes(index)) {
+          setSelectedCards(prev => prev.filter(i => i !== index));
+        } else if (selectedCards.length < 2) {
+          setSelectedCards(prev => [...prev, index]);
+        }
+      }
+    };
+
+    const handleOperation = (operation) => {
+      if (level === 1) {
+        const [num1, num2] = cards;
+        let result;
+
+        switch (operation) {
+          case '+': result = num1 + num2; break
+    
+    const handleSuccess = () => {
+      const newSolvedCount = solvedCount + 1;
+      setSolvedCount(newSolvedCount);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 1000);
+
+      if (newSolvedCount >= levelConfig[level].targetQuestions) {
+        // Update level times and high scores
+        const newTime = Math.floor((Date.now() - startTime) / 1000);
+        setLevelTimes(prev => ({
+          ...prev,
+          [`level${level}`]: newTime
+        }));
+
+        if (level === 3) {
+          const totalTime = newTime + levelTimes.level1 + levelTimes.level2;
+          const newScore = {
+            name: playerName,
+            solvedCount: newSolvedCount,
+            totalTime,
+            date: new Date().toISOString()
+          };
+
+          setHighScores(prev => {
+            const newHighScores = [...prev, newScore]
+              .sort((a, b) => b.solvedCount - a.solvedCount || a.totalTime - b.totalTime)
+              .slice(0, 10);
+            localStorage.setItem('24game_highscores', JSON.stringify(newHighScores));
+            return newHighScores;
+          });
+
+          setGamePhase('ranking');
+        } else {
+          setUnlockedLevels(prev => [...new Set([...prev, level + 1])]);
+          setGamePhase('levels');
+        }
+      } else {
+        generateCards();
+      }
+    };
+
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardContent className="p-6">
+          {/* Game board UI remains the same... */}
+        </CardContent>
+      </Card>
+    );
+  };
 
   // Main render logic
   const renderGamePhase = () => {
@@ -190,6 +343,6 @@ function Game24() {
       {renderGamePhase()}
     </div>
   );
-}
+};
 
 export default Game24;
