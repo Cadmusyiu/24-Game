@@ -20,9 +20,6 @@
         .fade-in {
             animation: fadeIn 0.3s ease-out;
         }
-        .bounce {
-            animation: bounce 0.8s ease;
-        }
         .card-animation {
             transition: all 0.3s ease;
         }
@@ -38,7 +35,7 @@
             background-color: #f3f4f6;
         }
         .success-message {
-            animation: fadeIn 0.3s ease-out, bounce 1s ease 0.3s;
+            animation: fadeIn 0.3s ease-out;
         }
     </style>
 </head>
@@ -55,6 +52,16 @@
             const [score, setScore] = React.useState(0);
             const [timeLeft, setTimeLeft] = React.useState(60);
             const [showSuccess, setShowSuccess] = React.useState(false);
+            const [highScores, setHighScores] = React.useState(() => {
+                const saved = localStorage.getItem('24game_highscores');
+                return saved ? JSON.parse(saved) : [];
+            });
+
+            const levelConfig = {
+                1: { cardCount: 2, targetQuestions: 24, timeLimit: 60 },
+                2: { cardCount: 3, targetQuestions: 24, timeLimit: 240 },
+                3: { cardCount: 4, targetQuestions: 24, timeLimit: null }
+            };
 
             // Predefined solvable combinations
             const solvableCombinations = {
@@ -67,7 +74,8 @@
                 let timer;
                 if (gamePhase === 'game') {
                     generateCards();
-                    setTimeLeft(60);
+                    setTimeLeft(levelConfig[level].timeLimit || 999999);
+                    setScore(0);
                     timer = setInterval(() => {
                         setTimeLeft(prev => {
                             if (prev <= 1) {
@@ -80,7 +88,7 @@
                     }, 1000);
                 }
                 return () => clearInterval(timer);
-            }, [gamePhase]);
+            }, [gamePhase, level]);
 
             const generateCards = () => {
                 const combinations = solvableCombinations[level];
@@ -110,18 +118,19 @@
                         setShowSuccess(true);
                         setTimeout(() => {
                             setShowSuccess(false);
-                            if (score + 1 >= 5) { // Unlock next level after 5 correct answers
-                                setUnlockedLevels(prev => [...new Set([...prev, 2])]);
+                            if (score + 1 >= 24) {
+                                if (timeLeft > 0) {
+                                    setUnlockedLevels(prev => [...new Set([...prev, 2])]);
+                                }
                                 setGamePhase('levels');
                             } else {
                                 generateCards();
                             }
-                        }, 1500);
+                        }, 500);
                     } else {
                         generateCards();
                     }
                 } else {
-                    // Original logic for levels 2 and 3
                     if (selectedCards.length !== 2) return;
                     
                     const num1 = cards[selectedCards[0]];
@@ -148,15 +157,30 @@
                             setShowSuccess(true);
                             setTimeout(() => {
                                 setShowSuccess(false);
-                                if (score + 1 >= 5) {
-                                    if (level === 2) {
+                                if (score + 1 >= 24) {
+                                    if (level === 2 && timeLeft > 0) {
                                         setUnlockedLevels(prev => [...new Set([...prev, 3])]);
+                                        setGamePhase('levels');
+                                    } else if (level === 3) {
+                                        const finalScore = {
+                                            name: playerName,
+                                            score: score + 1,
+                                            time: levelConfig[level].timeLimit - timeLeft,
+                                            date: new Date().toISOString()
+                                        };
+                                        setHighScores(prev => {
+                                            const newScores = [...prev, finalScore]
+                                                .sort((a, b) => b.score - a.score || a.time - b.time)
+                                                .slice(0, 10);
+                                            localStorage.setItem('24game_highscores', JSON.stringify(newScores));
+                                            return newScores;
+                                        });
+                                        setGamePhase('ranking');
                                     }
-                                    setGamePhase('levels');
                                 } else {
                                     generateCards();
                                 }
-                            }, 1500);
+                            }, 500);
                         } else {
                             generateCards();
                         }
@@ -167,7 +191,7 @@
                 }
             };
 
-            // Splash Screen Component
+            // Splash Screen
             const SplashScreen = () => (
                 <div className="bg-white rounded-lg shadow-lg p-8 text-center fade-in">
                     <div className="text-6xl font-bold text-blue-600 relative inline-block">
@@ -190,7 +214,7 @@
                 </div>
             );
 
-            // Name Input Component
+            // Name Input
             const NameInput = () => (
                 <div className="bg-white rounded-lg shadow-lg p-8 text-center fade-in">
                     <h2 className="text-2xl font-bold mb-4">Enter Your Name</h2>
@@ -215,7 +239,7 @@
                 </div>
             );
 
-            // Level Selection Component
+            // Level Selection
             const LevelSelect = () => (
                 <div className="bg-white rounded-lg shadow-lg p-8 text-center fade-in">
                     <h2 className="text-2xl font-bold mb-6">Select Level</h2>
@@ -238,9 +262,9 @@
                                     <div>
                                         <span className="text-lg font-bold">Level {lvl}</span>
                                         <p className="text-sm opacity-90">
-                                            {lvl === 1 ? "Basic - 2 numbers" :
-                                             lvl === 2 ? "Advanced - 3 numbers" :
-                                             "Expert - 4 numbers"}
+                                            {lvl === 1 ? "Complete 24 questions in 60s" :
+                                             lvl === 2 ? "Complete 24 questions in 240s" :
+                                             "Complete 24 questions for ranking"}
                                         </p>
                                     </div>
                                     {lvl !== 1 && !unlockedLevels.includes(lvl) && (
@@ -253,14 +277,14 @@
                 </div>
             );
 
-            // Game Board Component
+            // Game Board
             const GameBoard = () => (
                 <div className="bg-white rounded-lg shadow-lg p-8 min-w-[300px]">
                     <div className="space-y-8">
                         <div className="flex justify-between items-center">
                             <div className="text-lg font-bold">Level {level}</div>
                             <div className="text-lg font-bold">Time: {timeLeft}s</div>
-                            <div className="text-lg font-bold">Score: {score}</div>
+                            <div className="text-lg font-bold">Score: {score}/24</div>
                         </div>
 
                         <div className="flex justify-center gap-4">
@@ -321,11 +345,61 @@
 
                     {showSuccess && (
                         <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="bg-green-500 text-white px-8 py-4 rounded-lg text-2xl font-bold success-message">
-                                Perfect! You got 24!
+                           <div className="bg-green-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-2xl success-message">
+                                ✓
                             </div>
                         </div>
                     )}
+                </div>
+            );
+
+            // Rankings
+            const Rankings = () => (
+                <div className="bg-white rounded-lg shadow-lg p-8 text-center fade-in">
+                    <h2 className="text-2xl font-bold mb-6">High Scores</h2>
+                    <div className="space-y-4">
+                        {highScores.length === 0 ? (
+                            <p className="text-gray-500">No scores yet</p>
+                        ) : (
+                            <div className="overflow-hidden rounded-lg border border-gray-200">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Rank</th>
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Name</th>
+                                            <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Score</th>
+                                            <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {highScores.map((score, index) => (
+                                            <tr key={index} className={index < 3 ? 'bg-yellow-50' : ''}>
+                                                <td className="px-4 py-3 text-sm">
+                                                    {index + 1}
+                                                    {index < 3 && " 🏆"}
+                                                </td>
+                                                <td className="px-4 py-3 text-sm font-medium">{score.name}</td>
+                                                <td className="px-4 py-3 text-sm text-right">{score.score}</td>
+                                                <td className="px-4 py-3 text-sm text-right">{score.time}s</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                        <button
+                            onClick={() => {
+                                setUnlockedLevels([1]);
+                                setLevel(1);
+                                setScore(0);
+                                setGamePhase('levels');
+                            }}
+                            className="w-full p-3 bg-blue-500 text-white rounded-lg 
+                                hover:bg-blue-600 transition-colors duration-300 mt-4"
+                        >
+                            Play Again
+                        </button>
+                    </div>
                 </div>
             );
 
@@ -335,6 +409,7 @@
                     {gamePhase === 'name' && <NameInput />}
                     {gamePhase === 'levels' && <LevelSelect />}
                     {gamePhase === 'game' && <GameBoard />}
+                    {gamePhase === 'ranking' && <Rankings />}
                 </div>
             );
         };
