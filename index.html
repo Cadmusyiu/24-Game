@@ -4,12 +4,9 @@
     <title>24 Game</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- React -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
@@ -18,8 +15,126 @@
         const Game24 = () => {
             const [gamePhase, setGamePhase] = React.useState('splash');
             const [playerName, setPlayerName] = React.useState('');
+            const [level, setLevel] = React.useState(1);
+            const [cards, setCards] = React.useState([]);
+            const [selectedCards, setSelectedCards] = React.useState([]);
+            const [score, setScore] = React.useState(0);
+            const [timeLeft, setTimeLeft] = React.useState(60);
 
-            // Name Input Screen
+            // Generate random cards based on level
+            const generateCards = () => {
+                const count = level + 1; // Level 1: 2 cards, Level 2: 3 cards, Level 3: 4 cards
+                const newCards = [];
+                for (let i = 0; i < count; i++) {
+                    newCards.push(Math.floor(Math.random() * 9) + 1);
+                }
+                setCards(newCards);
+            };
+
+            React.useEffect(() => {
+                if (gamePhase === 'game') {
+                    generateCards();
+                    // Start timer
+                    const timer = setInterval(() => {
+                        setTimeLeft(prev => {
+                            if (prev <= 1) {
+                                clearInterval(timer);
+                                setGamePhase('levels');
+                                return 0;
+                            }
+                            return prev - 1;
+                        });
+                    }, 1000);
+                    return () => clearInterval(timer);
+                }
+            }, [gamePhase]);
+
+            const handleOperation = (op) => {
+                if (selectedCards.length !== 2) return;
+                
+                const num1 = cards[selectedCards[0]];
+                const num2 = cards[selectedCards[1]];
+                let result;
+
+                switch (op) {
+                    case '+': result = num1 + num2; break;
+                    case '-': result = Math.abs(num1 - num2); break;
+                    case '×': result = num1 * num2; break;
+                    case '÷':
+                        if (num2 === 0) return;
+                        result = num1 / num2;
+                        break;
+                    default: return;
+                }
+
+                const newCards = cards.filter((_, index) => !selectedCards.includes(index));
+                newCards.push(result);
+                
+                if (newCards.length === 1 && Math.abs(newCards[0] - 24) < 0.01) {
+                    setScore(score + 1);
+                    generateCards();
+                } else if (newCards.length === 1) {
+                    generateCards();
+                } else {
+                    setCards(newCards);
+                }
+                setSelectedCards([]);
+            };
+
+            // Game Board Component
+            const GameBoard = () => (
+                <div className="bg-white rounded-lg shadow-lg p-8">
+                    <div className="space-y-6">
+                        <div className="flex justify-between items-center">
+                            <div className="text-lg font-bold">Level {level}</div>
+                            <div className="text-lg font-bold">Time: {timeLeft}s</div>
+                            <div className="text-lg font-bold">Score: {score}</div>
+                        </div>
+
+                        <div className="flex justify-center gap-4">
+                            {cards.map((card, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => {
+                                        if (selectedCards.includes(index)) {
+                                            setSelectedCards(prev => prev.filter(i => i !== index));
+                                        } else if (selectedCards.length < 2) {
+                                            setSelectedCards(prev => [...prev, index]);
+                                        }
+                                    }}
+                                    className={`w-16 h-24 text-2xl font-bold rounded-lg shadow 
+                                        ${selectedCards.includes(index) 
+                                            ? 'bg-blue-100 border-2 border-blue-500' 
+                                            : 'bg-white border border-gray-200'}`}
+                                >
+                                    {card}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="flex justify-center gap-4">
+                            {['+', '-', '×', '÷'].map(op => (
+                                <button
+                                    key={op}
+                                    onClick={() => handleOperation(op)}
+                                    className="w-12 h-12 text-xl font-bold bg-gray-100 rounded-full hover:bg-gray-200"
+                                >
+                                    {op}
+                                </button>
+                            ))}
+                        </div>
+
+                        <button
+                            onClick={() => setGamePhase('levels')}
+                            className="w-full p-3 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                        >
+                            End Game
+                        </button>
+                    </div>
+                </div>
+            );
+
+            // Other existing components remain the same...
             const NameInput = () => (
                 <div className="bg-white rounded-lg shadow-lg p-8 text-center">
                     <h2 className="text-2xl font-bold mb-4">Enter Your Name</h2>
@@ -43,25 +158,28 @@
                 </div>
             );
 
-            // Level Selection Screen
             const LevelSelect = () => (
                 <div className="bg-white rounded-lg shadow-lg p-8 text-center">
                     <h2 className="text-2xl font-bold mb-4">Select Level</h2>
                     <div className="space-y-4">
-                        {[1, 2, 3].map(level => (
+                        {[1, 2, 3].map(lvl => (
                             <button
-                                key={level}
-                                onClick={() => setGamePhase('game')}
+                                key={lvl}
+                                onClick={() => {
+                                    setLevel(lvl);
+                                    setTimeLeft(60);
+                                    setScore(0);
+                                    setGamePhase('game');
+                                }}
                                 className="w-full p-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                             >
-                                Level {level}
+                                Level {lvl}
                             </button>
                         ))}
                     </div>
                 </div>
             );
 
-            // Main render logic
             return (
                 <div className="min-h-screen bg-gray-100 p-4 flex items-center justify-center">
                     {gamePhase === 'splash' && (
@@ -78,6 +196,7 @@
                     )}
                     {gamePhase === 'name' && <NameInput />}
                     {gamePhase === 'levels' && <LevelSelect />}
+                    {gamePhase === 'game' && <GameBoard />}
                 </div>
             );
         };
