@@ -9,18 +9,32 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-20px); }
         }
-        .success-animation {
-            animation: bounce 1s ease;
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        .bounce {
+            animation: bounce 1s ease infinite;
+        }
+        .hover-scale {
+            transition: transform 0.2s ease;
+        }
+        .hover-scale:hover {
+            transform: scale(1.05);
         }
         .card-hover {
             transition: all 0.3s ease;
         }
         .card-hover:hover {
             transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
     </style>
 </head>
@@ -28,26 +42,41 @@
     <div id="root"></div>
     <script type="text/babel">
         const Game24 = () => {
-            // State declarations
             const [gamePhase, setGamePhase] = React.useState('splash');
             const [playerName, setPlayerName] = React.useState('');
             const [level, setLevel] = React.useState(1);
-            const [cards, setCards] = React.useState([]);
-            const [selectedCards, setSelectedCards] = React.useState([]);
-            const [score, setScore] = React.useState(0);
-            const [timeLeft, setTimeLeft] = React.useState(60);
-            const [showSuccess, setShowSuccess] = React.useState(false);
+            const [unlockedLevels, setUnlockedLevels] = React.useState([1]);
 
-            // Name Input Component
+            // Splash Screen
+            const SplashScreen = () => (
+                <div className="bg-white rounded-lg shadow-lg p-8 text-center fade-in">
+                    <div className="text-6xl font-bold text-blue-600 hover-scale">24</div>
+                    <div className="absolute -right-8 top-8 flex flex-col gap-1">
+                        <span className="text-2xl text-green-500">+</span>
+                        <span className="text-2xl text-red-500">-</span>
+                        <span className="text-2xl text-yellow-500">×</span>
+                        <span className="text-2xl text-purple-500">÷</span>
+                    </div>
+                    <p className="mt-4 text-gray-600">The Math Challenge</p>
+                    <button 
+                        onClick={() => setGamePhase('name')}
+                        className="mt-8 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 hover-scale"
+                    >
+                        Start Game
+                    </button>
+                </div>
+            );
+
+            // Name Input Screen
             const NameInput = () => (
-                <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-                    <h2 className="text-2xl font-bold mb-4">Enter Your Name</h2>
+                <div className="bg-white rounded-lg shadow-lg p-8 text-center fade-in">
+                    <h2 className="text-2xl font-bold mb-4">Welcome to 24!</h2>
                     <input
                         type="text"
                         value={playerName}
                         onChange={(e) => setPlayerName(e.target.value)}
-                        className="w-full p-2 border rounded mb-4"
-                        placeholder="Your name"
+                        placeholder="Enter your name"
+                        className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none mb-4"
                     />
                     <button
                         onClick={() => {
@@ -55,30 +84,45 @@
                                 setGamePhase('levels');
                             }
                         }}
-                        className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                        className="w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 hover-scale"
                     >
                         Continue
                     </button>
                 </div>
             );
 
-            // Level Select Component
+            // Level Selection Screen
             const LevelSelect = () => (
-                <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-                    <h2 className="text-2xl font-bold mb-4">Select Level</h2>
-                    <div className="space-y-4">
-                        {[1, 2, 3].map(lvl => (
+                <div className="bg-white rounded-lg shadow-lg p-8 fade-in">
+                    <h2 className="text-2xl font-bold text-center mb-6">Select Level</h2>
+                    <div className="grid gap-4">
+                        {[1, 2, 3].map((lvl) => (
                             <button
                                 key={lvl}
                                 onClick={() => {
                                     setLevel(lvl);
-                                    setTimeLeft(60);
-                                    setScore(0);
                                     setGamePhase('game');
                                 }}
-                                className="w-full p-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                                className={`
+                                    p-4 rounded-lg border-2 text-left relative hover-scale
+                                    ${unlockedLevels.includes(lvl) 
+                                        ? 'border-blue-500 hover:bg-blue-50' 
+                                        : 'border-gray-300 opacity-50 cursor-not-allowed'}
+                                `}
                             >
-                                Level {lvl}
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-xl font-bold">Level {lvl}</h3>
+                                        <p className="text-gray-600">
+                                            {lvl === 1 ? "Simple addition and multiplication" :
+                                             lvl === 2 ? "Intermediate operations with 3 numbers" :
+                                             "Advanced calculations with 4 numbers"}
+                                        </p>
+                                    </div>
+                                    {!unlockedLevels.includes(lvl) && 
+                                        <span className="text-red-500">🔒</span>
+                                    }
+                                </div>
                             </button>
                         ))}
                     </div>
@@ -87,74 +131,14 @@
 
             // Game Board Component
             const GameBoard = () => (
-                <div className="bg-white rounded-lg shadow-lg p-8">
-                    <div className="space-y-6">
-                        <div className="flex justify-between items-center">
-                            <div className="text-lg font-bold">Level {level}</div>
-                            <div className="text-lg font-bold">Time: {timeLeft}s</div>
-                            <div className="text-lg font-bold">Score: {score}</div>
-                        </div>
-
-                        <div className="flex justify-center gap-4">
-                            {cards.map((card, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => handleCardClick(index)}
-                                    className={`w-16 h-24 text-2xl font-bold rounded-lg shadow card-hover
-                                        ${selectedCards.includes(index) 
-                                            ? 'bg-blue-100 border-2 border-blue-500' 
-                                            : 'bg-white border border-gray-200'}`}
-                                >
-                                    {card}
-                                </button>
-                            ))}
-                        </div>
-
-                        <div className="flex justify-center gap-4">
-                            {['+', '-', '×', '÷'].map(op => (
-                                <button
-                                    key={op}
-                                    onClick={() => handleOperation(op)}
-                                    className="w-12 h-12 text-xl font-bold bg-gray-100 rounded-full hover:bg-gray-200"
-                                >
-                                    {op}
-                                </button>
-                            ))}
-                        </div>
-
-                        <div className="flex gap-4">
-                            <button
-                                onClick={generateCards}
-                                className="flex-1 p-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
-                            >
-                                Pass
-                            </button>
-                            <button
-                                onClick={() => setGamePhase('levels')}
-                                className="flex-1 p-3 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                            >
-                                End Game
-                            </button>
-                        </div>
-                    </div>
+                <div className="bg-white rounded-lg shadow-lg p-8 fade-in">
+                    {/* Add game board content here */}
                 </div>
             );
 
-            // Main render
             return (
                 <div className="min-h-screen bg-gray-100 p-4 flex items-center justify-center">
-                    {gamePhase === 'splash' && (
-                        <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-                            <div className="text-6xl font-bold text-blue-600">24</div>
-                            <p className="mt-4 text-gray-600">The Math Challenge</p>
-                            <button 
-                                onClick={() => setGamePhase('name')}
-                                className="mt-8 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                            >
-                                Start Game
-                            </button>
-                        </div>
-                    )}
+                    {gamePhase === 'splash' && <SplashScreen />}
                     {gamePhase === 'name' && <NameInput />}
                     {gamePhase === 'levels' && <LevelSelect />}
                     {gamePhase === 'game' && <GameBoard />}
