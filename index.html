@@ -66,6 +66,7 @@
                 let timer;
                 if (gamePhase === 'game') {
                     generateCards();
+                    setTimeLeft(60);
                     timer = setInterval(() => {
                         setTimeLeft(prev => {
                             if (prev <= 1) {
@@ -124,14 +125,84 @@
                 setSelectedCards([]);
             };
 
+            // Splash Screen Component
+            const SplashScreen = () => (
+                <div className="bg-white rounded-lg shadow-lg p-8 text-center fade-in">
+                    <div className="text-6xl font-bold text-blue-600 relative inline-block">
+                        24
+                        <div className="absolute -right-12 top-0 flex flex-col gap-1">
+                            <span className="text-2xl text-green-500">+</span>
+                            <span className="text-2xl text-red-500">-</span>
+                            <span className="text-2xl text-yellow-500">×</span>
+                            <span className="text-2xl text-purple-500">÷</span>
+                        </div>
+                    </div>
+                    <p className="mt-4 text-gray-600">The Math Challenge</p>
+                    <button 
+                        onClick={() => setGamePhase('name')}
+                        className="mt-8 px-6 py-3 bg-blue-500 text-white rounded-lg 
+                            hover:bg-blue-600 transition-colors duration-300"
+                    >
+                        Start Game
+                    </button>
+                </div>
+            );
+
+            // Name Input Component
+            const NameInput = () => (
+                <div className="bg-white rounded-lg shadow-lg p-8 text-center fade-in">
+                    <h2 className="text-2xl font-bold mb-4">Enter Your Name</h2>
+                    <input
+                        type="text"
+                        value={playerName}
+                        onChange={(e) => setPlayerName(e.target.value)}
+                        placeholder="Your name"
+                        className="w-full p-2 border rounded mb-4"
+                    />
+                    <button
+                        onClick={() => {
+                            if (playerName.trim()) {
+                                setGamePhase('levels');
+                            }
+                        }}
+                        className="w-full p-3 bg-blue-500 text-white rounded-lg 
+                            hover:bg-blue-600 transition-colors duration-300"
+                    >
+                        Continue
+                    </button>
+                </div>
+            );
+
+            // Level Selection Component
+            const LevelSelect = () => (
+                <div className="bg-white rounded-lg shadow-lg p-8 text-center fade-in">
+                    <h2 className="text-2xl font-bold mb-6">Select Level</h2>
+                    <div className="space-y-4">
+                        {[1, 2, 3].map(lvl => (
+                            <button
+                                key={lvl}
+                                onClick={() => {
+                                    setLevel(lvl);
+                                    setGamePhase('game');
+                                }}
+                                className="w-full p-4 bg-blue-500 text-white rounded-lg 
+                                    hover:bg-blue-600 transition-colors duration-300"
+                            >
+                                Level {lvl}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            );
+
             // Game Board Component
             const GameBoard = () => (
                 <div className="bg-white rounded-lg shadow-lg p-8 fade-in min-w-[300px]">
                     <div className="space-y-8">
                         <div className="flex justify-between items-center">
-                            <div className="text-lg font-bold text-blue-600">Level {level}</div>
-                            <div className="text-lg font-bold text-gray-600">Time: {timeLeft}s</div>
-                            <div className="text-lg font-bold text-green-600">Score: {score}</div>
+                            <div className="text-lg font-bold">Level {level}</div>
+                            <div className="text-lg font-bold">Time: {timeLeft}s</div>
+                            <div className="text-lg font-bold">Score: {score}</div>
                         </div>
 
                         <div className="flex justify-center gap-4">
@@ -198,10 +269,11 @@
                 </div>
             );
 
-            // Other components (SplashScreen, NameInput, LevelSelect) remain the same...
-            
             return (
                 <div className="min-h-screen bg-gray-100 p-4 flex items-center justify-center">
+                    {gamePhase === 'splash' && <SplashScreen />}
+                    {gamePhase === 'name' && <NameInput />}
+                    {gamePhase === 'levels' && <LevelSelect />}
                     {gamePhase === 'game' && <GameBoard />}
                 </div>
             );
