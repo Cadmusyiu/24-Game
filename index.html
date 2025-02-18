@@ -49,6 +49,7 @@
             const [gamePhase, setGamePhase] = React.useState('splash');
             const [playerName, setPlayerName] = React.useState('');
             const [level, setLevel] = React.useState(1);
+            const [unlockedLevels, setUnlockedLevels] = React.useState([1]);
             const [cards, setCards] = React.useState([]);
             const [selectedCards, setSelectedCards] = React.useState([]);
             const [score, setScore] = React.useState(0);
@@ -71,6 +72,7 @@
                         setTimeLeft(prev => {
                             if (prev <= 1) {
                                 clearInterval(timer);
+                                setGamePhase('levels');
                                 return 0;
                             }
                             return prev - 1;
@@ -88,41 +90,81 @@
             };
 
             const handleOperation = (operation) => {
-                if (selectedCards.length !== 2) return;
-                
-                const num1 = cards[selectedCards[0]];
-                const num2 = cards[selectedCards[1]];
-                let result;
+                if (level === 1) {
+                    // For level 1, directly use the two cards
+                    const [num1, num2] = cards;
+                    let result;
 
-                switch (operation) {
-                    case '+': result = num1 + num2; break;
-                    case '-': result = Math.abs(num1 - num2); break;
-                    case '×': result = num1 * num2; break;
-                    case '÷':
-                        if (num2 === 0) return;
-                        result = Math.max(num1, num2) / Math.min(num1, num2);
-                        break;
-                    default: return;
-                }
+                    switch (operation) {
+                        case '+': result = num1 + num2; break;
+                        case '-': result = Math.abs(num1 - num2); break;
+                        case '×': result = num1 * num2; break;
+                        case '÷':
+                            result = Math.max(num1, num2) / Math.min(num1, num2);
+                            break;
+                        default: return;
+                    }
 
-                const newCards = cards.filter((_, index) => !selectedCards.includes(index));
-                newCards.push(result);
-
-                if (newCards.length === 1) {
-                    if (Math.abs(newCards[0] - 24) < 0.001) {
+                    if (Math.abs(result - 24) < 0.001) {
                         setScore(prev => prev + 1);
                         setShowSuccess(true);
                         setTimeout(() => {
                             setShowSuccess(false);
-                            generateCards();
+                            if (score + 1 >= 5) { // Unlock next level after 5 correct answers
+                                setUnlockedLevels(prev => [...new Set([...prev, 2])]);
+                                setGamePhase('levels');
+                            } else {
+                                generateCards();
+                            }
                         }, 1500);
                     } else {
                         generateCards();
                     }
                 } else {
-                    setCards(newCards);
+                    // Original logic for levels 2 and 3
+                    if (selectedCards.length !== 2) return;
+                    
+                    const num1 = cards[selectedCards[0]];
+                    const num2 = cards[selectedCards[1]];
+                    let result;
+
+                    switch (operation) {
+                        case '+': result = num1 + num2; break;
+                        case '-': result = Math.abs(num1 - num2); break;
+                        case '×': result = num1 * num2; break;
+                        case '÷':
+                            if (num2 === 0) return;
+                            result = Math.max(num1, num2) / Math.min(num1, num2);
+                            break;
+                        default: return;
+                    }
+
+                    const newCards = cards.filter((_, index) => !selectedCards.includes(index));
+                    newCards.push(result);
+
+                    if (newCards.length === 1) {
+                        if (Math.abs(newCards[0] - 24) < 0.001) {
+                            setScore(prev => prev + 1);
+                            setShowSuccess(true);
+                            setTimeout(() => {
+                                setShowSuccess(false);
+                                if (score + 1 >= 5) {
+                                    if (level === 2) {
+                                        setUnlockedLevels(prev => [...new Set([...prev, 3])]);
+                                    }
+                                    setGamePhase('levels');
+                                } else {
+                                    generateCards();
+                                }
+                            }, 1500);
+                        } else {
+                            generateCards();
+                        }
+                    } else {
+                        setCards(newCards);
+                    }
+                    setSelectedCards([]);
                 }
-                setSelectedCards([]);
             };
 
             // Splash Screen Component
@@ -182,13 +224,29 @@
                             <button
                                 key={lvl}
                                 onClick={() => {
-                                    setLevel(lvl);
-                                    setGamePhase('game');
+                                    if (lvl === 1 || unlockedLevels.includes(lvl)) {
+                                        setLevel(lvl);
+                                        setGamePhase('game');
+                                    }
                                 }}
-                                className="w-full p-4 bg-blue-500 text-white rounded-lg 
-                                    hover:bg-blue-600 transition-colors duration-300"
+                                className={`w-full p-4 text-left rounded-lg border-2 transition-all
+                                    ${lvl === 1 || unlockedLevels.includes(lvl)
+                                        ? 'bg-blue-500 text-white hover:bg-blue-600 border-blue-600'
+                                        : 'bg-gray-100 text-gray-500 cursor-not-allowed border-gray-300'}`}
                             >
-                                Level {lvl}
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <span className="text-lg font-bold">Level {lvl}</span>
+                                        <p className="text-sm opacity-90">
+                                            {lvl === 1 ? "Basic - 2 numbers" :
+                                             lvl === 2 ? "Advanced - 3 numbers" :
+                                             "Expert - 4 numbers"}
+                                        </p>
+                                    </div>
+                                    {lvl !== 1 && !unlockedLevels.includes(lvl) && (
+                                        <span className="text-lg">🔒</span>
+                                    )}
+                                </div>
                             </button>
                         ))}
                     </div>
@@ -197,7 +255,7 @@
 
             // Game Board Component
             const GameBoard = () => (
-                <div className="bg-white rounded-lg shadow-lg p-8 fade-in min-w-[300px]">
+                <div className="bg-white rounded-lg shadow-lg p-8 min-w-[300px]">
                     <div className="space-y-8">
                         <div className="flex justify-between items-center">
                             <div className="text-lg font-bold">Level {level}</div>
@@ -210,10 +268,12 @@
                                 <button
                                     key={index}
                                     onClick={() => {
-                                        if (selectedCards.includes(index)) {
-                                            setSelectedCards(prev => prev.filter(i => i !== index));
-                                        } else if (selectedCards.length < 2) {
-                                            setSelectedCards(prev => [...prev, index]);
+                                        if (level !== 1) {
+                                            if (selectedCards.includes(index)) {
+                                                setSelectedCards(prev => prev.filter(i => i !== index));
+                                            } else if (selectedCards.length < 2) {
+                                                setSelectedCards(prev => [...prev, index]);
+                                            }
                                         }
                                     }}
                                     className={`w-16 h-24 text-2xl font-bold rounded-lg shadow-lg 
@@ -232,7 +292,7 @@
                                 <button
                                     key={op}
                                     onClick={() => handleOperation(op)}
-                                    disabled={selectedCards.length !== 2}
+                                    disabled={level !== 1 && selectedCards.length !== 2}
                                     className="w-12 h-12 text-xl font-bold bg-gray-100 rounded-full 
                                         operation-hover disabled:opacity-50"
                                 >
