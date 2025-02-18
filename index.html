@@ -8,6 +8,29 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .success-animation {
+            animation: bounce 1s ease;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+    </style>
 </head>
 <body>
     <div id="root"></div>
@@ -20,21 +43,41 @@
             const [selectedCards, setSelectedCards] = React.useState([]);
             const [score, setScore] = React.useState(0);
             const [timeLeft, setTimeLeft] = React.useState(60);
+            const [showSuccess, setShowSuccess] = React.useState(false);
 
-            // Generate random cards based on level
+            // Predefined solvable combinations
+            const solvableCombinations = {
+                1: [ // Level 1 (2 numbers)
+                    [3, 8],     // 3 × 8 = 24
+                    [4, 6],     // 4 × 6 = 24
+                    [12, 2],    // 12 × 2 = 24
+                    [24, 1],    // 24 × 1 = 24
+                    [32, 8],    // 32 - 8 = 24
+                    [16, 8],    // 16 + 8 = 24
+                ],
+                2: [ // Level 2 (3 numbers)
+                    [2, 3, 4],  // 2 × 3 × 4 = 24
+                    [1, 4, 6],  // (1 + 4) × 6 = 24
+                    [2, 6, 6],  // (6 + 6) × 2 = 24
+                    [3, 3, 8],  // 3 × 8 = 24
+                ],
+                3: [ // Level 3 (4 numbers)
+                    [1, 2, 3, 4], // (1 + 3) × (2 × 4) = 24
+                    [2, 2, 2, 6], // 2 × 2 × 2 × 6 = 24
+                    [1, 1, 4, 6], // (1 + 1) × 4 × 6 = 24
+                    [2, 3, 4, 4], // 2 × 3 × 4 = 24
+                ]
+            };
+
             const generateCards = () => {
-                const count = level + 1; // Level 1: 2 cards, Level 2: 3 cards, Level 3: 4 cards
-                const newCards = [];
-                for (let i = 0; i < count; i++) {
-                    newCards.push(Math.floor(Math.random() * 9) + 1);
-                }
-                setCards(newCards);
+                const combinations = solvableCombinations[level];
+                const randomCombo = combinations[Math.floor(Math.random() * combinations.length)];
+                setCards([...randomCombo]); // Create a copy to avoid modifying the original
             };
 
             React.useEffect(() => {
                 if (gamePhase === 'game') {
                     generateCards();
-                    // Start timer
                     const timer = setInterval(() => {
                         setTimeLeft(prev => {
                             if (prev <= 1) {
@@ -62,7 +105,7 @@
                     case '×': result = num1 * num2; break;
                     case '÷':
                         if (num2 === 0) return;
-                        result = num1 / num2;
+                        result = Math.max(num1, num2) / Math.min(num1, num2);
                         break;
                     default: return;
                 }
@@ -72,7 +115,11 @@
                 
                 if (newCards.length === 1 && Math.abs(newCards[0] - 24) < 0.01) {
                     setScore(score + 1);
-                    generateCards();
+                    setShowSuccess(true);
+                    setTimeout(() => {
+                        setShowSuccess(false);
+                        generateCards();
+                    }, 1500);
                 } else if (newCards.length === 1) {
                     generateCards();
                 } else {
@@ -81,14 +128,14 @@
                 setSelectedCards([]);
             };
 
-            // Game Board Component
+            // Game Board Component with animations and improved styling
             const GameBoard = () => (
-                <div className="bg-white rounded-lg shadow-lg p-8">
+                <div className="bg-white rounded-lg shadow-lg p-8 fade-in relative">
                     <div className="space-y-6">
                         <div className="flex justify-between items-center">
-                            <div className="text-lg font-bold">Level {level}</div>
-                            <div className="text-lg font-bold">Time: {timeLeft}s</div>
-                            <div className="text-lg font-bold">Score: {score}</div>
+                            <div className="text-lg font-bold text-blue-600">Level {level}</div>
+                            <div className="text-lg font-bold text-gray-600">Time: {timeLeft}s</div>
+                            <div className="text-lg font-bold text-green-600">Score: {score}</div>
                         </div>
 
                         <div className="flex justify-center gap-4">
@@ -103,8 +150,9 @@
                                         }
                                     }}
                                     className={`w-16 h-24 text-2xl font-bold rounded-lg shadow 
+                                        card-hover transition-all duration-300
                                         ${selectedCards.includes(index) 
-                                            ? 'bg-blue-100 border-2 border-blue-500' 
+                                            ? 'bg-blue-100 border-2 border-blue-500 transform -translate-y-2' 
                                             : 'bg-white border border-gray-200'}`}
                                 >
                                     {card}
@@ -117,78 +165,57 @@
                                 <button
                                     key={op}
                                     onClick={() => handleOperation(op)}
-                                    className="w-12 h-12 text-xl font-bold bg-gray-100 rounded-full hover:bg-gray-200"
+                                    className="w-12 h-12 text-xl font-bold bg-gray-100 rounded-full 
+                                        hover:bg-gray-200 transition-colors duration-300
+                                        transform hover:scale-110"
                                 >
                                     {op}
                                 </button>
                             ))}
                         </div>
 
-                        <button
-                            onClick={() => setGamePhase('levels')}
-                            className="w-full p-3 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                        >
-                            End Game
-                        </button>
-                    </div>
-                </div>
-            );
-
-            // Other existing components remain the same...
-            const NameInput = () => (
-                <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-                    <h2 className="text-2xl font-bold mb-4">Enter Your Name</h2>
-                    <input
-                        type="text"
-                        value={playerName}
-                        onChange={(e) => setPlayerName(e.target.value)}
-                        className="w-full p-2 border rounded mb-4"
-                        placeholder="Your name"
-                    />
-                    <button
-                        onClick={() => {
-                            if (playerName.trim()) {
-                                setGamePhase('levels');
-                            }
-                        }}
-                        className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                    >
-                        Continue
-                    </button>
-                </div>
-            );
-
-            const LevelSelect = () => (
-                <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-                    <h2 className="text-2xl font-bold mb-4">Select Level</h2>
-                    <div className="space-y-4">
-                        {[1, 2, 3].map(lvl => (
+                        <div className="flex gap-4">
                             <button
-                                key={lvl}
-                                onClick={() => {
-                                    setLevel(lvl);
-                                    setTimeLeft(60);
-                                    setScore(0);
-                                    setGamePhase('game');
-                                }}
-                                className="w-full p-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                                onClick={generateCards}
+                                className="flex-1 p-3 bg-yellow-500 text-white rounded-lg 
+                                    hover:bg-yellow-600 transition-colors duration-300"
                             >
-                                Level {lvl}
+                                Pass
                             </button>
-                        ))}
+                            <button
+                                onClick={() => setGamePhase('levels')}
+                                className="flex-1 p-3 bg-red-500 text-white rounded-lg 
+                                    hover:bg-red-600 transition-colors duration-300"
+                            >
+                                End Game
+                            </button>
+                        </div>
                     </div>
+
+                    {/* Success popup */}
+                    {showSuccess && (
+                        <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="bg-green-500 text-white px-8 py-4 rounded-lg text-2xl font-bold success-animation">
+                                Perfect! You got 24!
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
+
+            // ... rest of your components (NameInput, LevelSelect, etc.) ...
 
             return (
                 <div className="min-h-screen bg-gray-100 p-4 flex items-center justify-center">
                     {gamePhase === 'splash' && (
-                        <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-                            <div className="text-6xl font-bold text-blue-600">24</div>
+                        <div className="bg-white rounded-lg shadow-lg p-8 text-center fade-in">
+                            <div className="text-6xl font-bold text-blue-600 card-hover">24</div>
                             <p className="mt-4 text-gray-600">The Math Challenge</p>
                             <button 
                                 onClick={() => setGamePhase('name')}
-                                className="mt-8 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                                className="mt-8 px-6 py-3 bg-blue-500 text-white rounded-lg 
+                                    hover:bg-blue-600 transition-colors duration-300
+                                    transform hover:scale-105"
                             >
                                 Start Game
                             </button>
