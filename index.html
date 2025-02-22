@@ -180,7 +180,7 @@
                         setShowSuccess(true);
                         setTimeout(() => {
                             setShowSuccess(false);
-                            if (score + 1 >= 24) {
+                            if (score + 1 >= 10) {
                                 // Only need to complete 24 questions within time limit                                
                                 if (timeLeft > 0 ) {
                                     setUnlockedLevels(prev => [...new Set([...prev, 2])]);
@@ -342,7 +342,7 @@
                             <ul className="list-disc pl-5">
                                 <li>You're given 2 numbers</li>
                                 <li>Choose one operation (+, -, ×, ÷) to make 24</li>
-                                <li>Complete 24 questions within 60 seconds to unlock Level 2</li>
+                                <li>Complete 10 questions within 60 seconds to unlock Level 2</li>
                             </ul>
                         </div>
                         
@@ -431,7 +431,7 @@
                         <div className="flex justify-between items-center">
                             <div className="text-lg font-bold">Level {level}</div>
                             <div className="text-lg font-bold">Time: {timeLeft}s</div>
-                            <div className="text-lg font-bold">Score: {score}/24</div>
+                            <div className="text-lg font-bold">Score: {score}/10</div>
                         </div>
 
                         {level === 1 && (
