@@ -289,17 +289,73 @@
                         value={playerName}
                         onChange={(e) => setPlayerName(e.target.value)}
                         placeholder="Your name"
-                        className="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full p-2 border rounded mb-4"
                         autoFocus
                     />
                     <button
                         onClick={() => {
                             if (playerName.trim()) {
-                                setGamePhase('levels');
+                                setGamePhase('instructions');
                             }
                         }}
                         className="w-full p-3 bg-blue-500 text-white rounded-lg 
                             hover:bg-blue-600 transition-colors duration-300"
+                    >
+                        Continue
+                    </button>
+                </div>
+            );
+
+            // Instructions Component
+            const Instructions = () => (
+                <div className="bg-white rounded-lg shadow-lg p-8 text-center fade-in">
+                    <h2 className="text-2xl font-bold mb-4">How to Play</h2>
+                    <div className="text-left space-y-4">
+                        <p><span className="font-bold">Goal:</span> Make the number 24 using all the cards and basic math operations.</p>
+                        
+                        <div className="mb-2">
+                            <h3 className="font-bold">Level 1: Basics</h3>
+                            <ul className="list-disc pl-5">
+                                <li>You're given 2 numbers</li>
+                                <li>Choose one operation (+, -, ×, ÷) to make 24</li>
+                                <li>Complete 24 questions within 60 seconds to unlock Level 2</li>
+                            </ul>
+                        </div>
+                        
+                        <div className="mb-2">
+                            <h3 className="font-bold">Level 2: Advanced</h3>
+                            <ul className="list-disc pl-5">
+                                <li>You're given 3 numbers</li>
+                                <li>Select 2 cards and apply an operation</li>
+                                <li>Continue until you reach 24</li>
+                                <li>Complete 24 questions within 240 seconds to unlock Level 3</li>
+                            </ul>
+                        </div>
+                        
+                        <div className="mb-2">
+                            <h3 className="font-bold">Level 3: Expert</h3>
+                            <ul className="list-disc pl-5">
+                                <li>You're given 4 numbers</li>
+                                <li>Select 2 cards and apply an operation</li>
+                                <li>Continue until you reach 24</li>
+                                <li>Your time will be recorded for the leaderboard</li>
+                            </ul>
+                        </div>
+                        
+                        <div className="mb-2">
+                            <h3 className="font-bold">Tips:</h3>
+                            <ul className="list-disc pl-5">
+                                <li>Use "Pass" to skip difficult combinations</li>
+                                <li>In Levels 2-3, select two cards, then an operation</li>
+                                <li>Try different approaches if you get stuck</li>
+                                <li>Watch the timer and plan accordingly</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => setGamePhase('levels')}
+                        className="w-full p-3 bg-blue-500 text-white rounded-lg 
+                            hover:bg-blue-600 transition-colors duration-300 mt-4"
                     >
                         Continue
                     </button>
@@ -495,6 +551,7 @@
                 <div className="min-h-screen bg-gray-100 p-4 flex items-center justify-center">
                     {gamePhase === 'splash' && <SplashScreen />}
                     {gamePhase === 'name' && <NameInput />}
+                    {gamePhase === 'instructions' && <Instructions />}
                     {gamePhase === 'levels' && <LevelSelect />}
                     {gamePhase === 'game' && <GameBoard />}
                     {gamePhase === 'ranking' && <Rankings />}
