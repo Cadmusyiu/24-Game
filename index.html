@@ -259,24 +259,48 @@
 
             // Splash Screen
             const SplashScreen = () => (
-                <div className="bg-white rounded-lg shadow-lg p-8 text-center fade-in">
-                    <div className="text-6xl font-bold text-blue-600 relative inline-block">
-                        24
-                        <div className="absolute -right-12 top-0 flex flex-col gap-1">
-                            <span className="text-2xl text-green-500">+</span>
-                            <span className="text-2xl text-red-500">-</span>
-                            <span className="text-2xl text-yellow-500">×</span>
-                            <span className="text-2xl text-purple-500">÷</span>
+                <div className="bg-white rounded-2xl shadow-2xl p-10 text-center fade-in max-w-md w-full mx-auto relative overflow-hidden">
+                    {/* Background decorative elements */}
+                    <div className="absolute -top-16 -right-16 w-32 h-32 bg-blue-100 rounded-full opacity-50"></div>
+                    <div className="absolute -bottom-16 -left-16 w-32 h-32 bg-green-100 rounded-full opacity-50"></div>
+                    
+                    {/* Game logo and title */}
+                    <div className="relative z-10 mb-8">
+                        <div className="text-8xl font-bold relative inline-block">
+                            <span className="bg-gradient-to-r from-blue-600 to-blue-400 text-transparent bg-clip-text">24</span>
+                            <div className="absolute -right-14 -top-2 flex flex-col gap-1">
+                                <span className="text-3xl text-green-500 transform rotate-6">+</span>
+                                <span className="text-3xl text-red-500 transform -rotate-3">-</span>
+                                <span className="text-3xl text-yellow-500 transform rotate-12">×</span>
+                                <span className="text-3xl text-purple-500 transform -rotate-6">÷</span>
+                            </div>
                         </div>
+                        <p className="text-xl text-gray-600 mt-2 font-light">The Math Challenge</p>
                     </div>
-                    <p className="mt-4 text-gray-600">The Math Challenge</p>
+                    
+                    {/* Game intro */}
+                    <div className="mb-8 text-left bg-gray-50 p-4 rounded-lg shadow-inner">
+                        <p className="text-gray-700">
+                            Challenge your math skills! Use operations to make 24 from the given numbers.
+                            Complete each level to unlock new challenges.
+                        </p>
+                    </div>
+                    
+                    {/* Start button */}
                     <button 
                         onClick={() => setGamePhase('name')}
-                        className="mt-8 px-6 py-3 bg-blue-500 text-white rounded-lg 
-                            hover:bg-blue-600 transition-colors duration-300"
+                        className="w-full py-4 px-6 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl
+                            hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg
+                            transform hover:-translate-y-1 hover:shadow-xl font-bold text-lg flex items-center justify-center"
                     >
+                        <span className="mr-2 text-xl">▶</span>
                         Start Game
                     </button>
+                    
+                    {/* Version info */}
+                    <div className="mt-4 text-xs text-gray-400">
+                        v1.0 • Created by {playerName || 'Math Enthusiast'}
+                    </div>
                 </div>
             );
 
