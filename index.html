@@ -64,11 +64,35 @@
                 3: { cardCount: 4, targetQuestions: 24, timeLimit: null }
             };
 
-            // Predefined solvable combinations
-            const solvableCombinations = {
-                1: [[3, 8], [4, 6], [12, 2], [24, 1], [32, 8], [16, 8]],
-                2: [[2, 3, 4], [1, 4, 6], [2, 6, 6], [3, 3, 8]],
-                3: [[1, 2, 3, 4], [2, 2, 2, 6], [1, 1, 4, 6], [2, 3, 4, 4]]
+            // Function to check if a set of numbers can make 24
+            const canMake24 = (numbers) => {
+                if (numbers.length === 1) {
+                    return Math.abs(numbers[0] - 24) < 0.001;
+                }
+
+                for (let i = 0; i < numbers.length; i++) {
+                    for (let j = i + 1; j < numbers.length; j++) {
+                        const a = numbers[i];
+                        const b = numbers[j];
+                        const remainingNumbers = numbers.filter((_, index) => index !== i && index !== j);
+
+                        // Try all operations
+                        const results = [
+                            a + b,
+                            Math.abs(a - b),
+                            a * b,
+                            b !== 0 ? a / b : null,
+                            a !== 0 ? b / a : null
+                        ].filter(x => x !== null);
+
+                        for (const result of results) {
+                            if (canMake24([...remainingNumbers, result])) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
             };
 
             React.useEffect(() => {
