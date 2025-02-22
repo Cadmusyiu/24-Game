@@ -52,6 +52,7 @@
             const [score, setScore] = React.useState(0);
             const [timeLeft, setTimeLeft] = React.useState(60);
             const [showSuccess, setShowSuccess] = React.useState(false);
+            const [operationCounts, setOperationCounts] = React.useState({'+': 0, '-': 0, '×': 0, '÷': 0});
             const [highScores, setHighScores] = React.useState(() => {
                 const saved = localStorage.getItem('24game_highscores');
                 return saved ? JSON.parse(saved) : [];
@@ -91,9 +92,40 @@
             }, [gamePhase, level]);
 
             const generateCards = () => {
-                const combinations = solvableCombinations[level];
-                const randomCombo = combinations[Math.floor(Math.random() * combinations.length)];
-                setCards([...randomCombo]);
+                let newCards = [];
+                let isValid = false;
+                let attempts = 0;
+                
+                // Generate random cards and check if they can make 24
+                while (!isValid && attempts < 100) {
+                    newCards = [];
+                    const cardCount = levelConfig[level].cardCount;
+                    
+                    // Generate random numbers based on level
+                    for (let i = 0; i < cardCount; i++) {
+                        let num;
+                        if (level === 1) {
+                            // Level 1: Allow larger numbers (1-32)
+                            num = Math.floor(Math.random() * 32) + 1;
+                        } else {
+                            // Level 2-3: Keep smaller numbers (1-12)
+                            num = Math.floor(Math.random() * 12) + 1;
+                        }
+                        newCards.push(num);
+                    }
+                    
+                    // Check if these cards can make 24
+                    isValid = canMake24(newCards);
+                    attempts++;
+                }
+                
+                // If we couldn't find a valid combination, use a fallback from presets
+                if (!isValid) {
+                    const combinations = solvableCombinations[level];
+                    newCards = [...combinations[Math.floor(Math.random() * combinations.length)]];
+                }
+                
+                setCards(newCards);
                 setSelectedCards([]);
             };
 
@@ -114,13 +146,24 @@
                     }
 
                     if (Math.abs(result - 24) < 0.001) {
+                        // Update operation count
+                        setOperationCounts(prev => ({
+                            ...prev,
+                            [operation]: prev[operation] + 1
+                        }));
+                        
                         setScore(prev => prev + 1);
                         setShowSuccess(true);
                         setTimeout(() => {
                             setShowSuccess(false);
                             if (score + 1 >= 24) {
-                                if (timeLeft > 0) {
+                                // Check if we have at least 3 of each operation type
+                                const operationDistribution = Object.values(operationCounts).every(count => count >= 3);
+                                
+                                if (timeLeft > 0 && operationDistribution) {
                                     setUnlockedLevels(prev => [...new Set([...prev, 2])]);
+                                    // Reset operation counts for next level
+                                    setOperationCounts({'+': 0, '-': 0, '×': 0, '÷': 0});
                                 }
                                 setGamePhase('levels');
                             } else {
@@ -131,6 +174,7 @@
                         generateCards();
                     }
                 } else {
+                    // Level 2-3 logic remains largely the same
                     if (selectedCards.length !== 2) return;
                     
                     const num1 = cards[selectedCards[0]];
@@ -288,6 +332,23 @@
                             <div className="text-lg font-bold">Score: {score}/24</div>
                         </div>
 
+                        {level === 1 && (
+                            <div className="grid grid-cols-4 gap-2 text-sm text-center">
+                                <div className="p-1 bg-green-100 rounded">
+                                    <span className="font-bold">+</span>: {operationCounts['+']}
+                                </div>
+                                <div className="p-1 bg-red-100 rounded">
+                                    <span className="font-bold">-</span>: {operationCounts['-']}
+                                </div>
+                                <div className="p-1 bg-yellow-100 rounded">
+                                    <span className="font-bold">×</span>: {operationCounts['×']}
+                                </div>
+                                <div className="p-1 bg-blue-100 rounded">
+                                    <span className="font-bold">÷</span>: {operationCounts['÷']}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="flex justify-center gap-4">
                             {cards.map((card, index) => (
                                 <button
@@ -318,8 +379,12 @@
                                     key={op}
                                     onClick={() => handleOperation(op)}
                                     disabled={level !== 1 && selectedCards.length !== 2}
-                                    className="w-12 h-12 text-xl font-bold bg-gray-100 rounded-full 
-                                        operation-hover disabled:opacity-50"
+                                    className={`w-12 h-12 text-xl font-bold rounded-full 
+                                        operation-hover disabled:opacity-50
+                                        ${op === '+' ? 'bg-green-100 hover:bg-green-200' : 
+                                          op === '-' ? 'bg-red-100 hover:bg-red-200' :
+                                          op === '×' ? 'bg-yellow-100 hover:bg-yellow-200' :
+                                          'bg-blue-100 hover:bg-blue-200'}`}
                                 >
                                     {op}
                                 </button>
@@ -346,7 +411,7 @@
 
                     {showSuccess && (
                         <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
-                           <div className="bg-green-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-2xl success-message">
+                            <div className="bg-green-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-2xl success-message">
                                 ✓
                             </div>
                         </div>
