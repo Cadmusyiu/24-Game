@@ -181,10 +181,8 @@
                         setTimeout(() => {
                             setShowSuccess(false);
                             if (score + 1 >= 24) {
-                                // Check if we have at least 3 of each operation type
-                                const operationDistribution = Object.values(operationCounts).every(count => count >= 3);
-                                
-                                if (timeLeft > 0 && operationDistribution) {
+                                // Only need to complete 24 questions within time limit                                
+                                if (timeLeft > 0 ) {
                                     setUnlockedLevels(prev => [...new Set([...prev, 2])]);
                                     // Reset operation counts for next level
                                     setOperationCounts({'+': 0, '-': 0, '×': 0, '÷': 0});
